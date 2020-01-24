@@ -1,0 +1,128 @@
+% chktex-file 3
+
+\documentclass[11pt, letterpaper, twoside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[fleqn]{amsmath}
+\usepackage[british]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[inner=2.5cm, outer=2.5cm, top=3cm, bottom=3cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{cancel}
+\usepackage{cleveref}
+\usepackage{aligned-overset}
+\usepackage{booktabs}
+\usepackage{changepage}
+\usepackage[acronym,toc,nogroupskip,nopostdot,seeautonumberlist,nonumberlist]{glossaries}
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+\usetikzlibrary{plotmarks}
+\usetikzlibrary{arrows.meta}
+\usepgfplotslibrary{patchplots}
+\usepackage{grffile}
+
+\bibliographystyle{acm}
+
+% \allowdisplaybreaks%
+
+\title{SLAM}
+\author{Martino Pilia}
+\date{\today}
+
+\newglossary[symg]{symbol}{syms}{symo}{Symbols}
+
+\setglossarysection{section}
+\makeglossaries%
+
+\input{acronyms.tex}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    This document is a brief report of activities performed between November 2019
+    and January 2020, concerning the investigation of \gls{sota} tools
+    for \gls{slam} based on \gls{VIO}, meant to identify a suitable starting point
+    to implement indoor localisation solutions on mobile devices.
+\end{abstract}
+
+\tableofcontents
+
+\glsfindwidesttoplevelname[\acronymtype]
+\printglossary[type=\acronymtype,style=alttree,title=Abbreviations,nonumberlist]
+
+\newpage
+
+\section{Introduction}
+
+\subsection{Scope}
+
+This document presents a preliminary evaluation of mapping and localisation
+tools, aimed to explore the current \gls{sota} and to identify a suitable
+starting point for further development of mobile localisation and mapping
+applications.
+
+\subsection{OpenVSLAM}
+
+OpenVSLAM\cite{openvslam2019} is a \gls{slam} system developed at the National
+Institute of Advanced Science and Technology in Japan. It consists of a C++
+library based on OpenCV that allows to perform \gls{slam} based on pure visual
+odometry, and supports multiple camera configurations as input, including
+monocular, stereo, and RGB-D, with several lens models (pinhole, fisheye,
+equirectangular). While being very young, the project has good quality and
+coding standards, and it is currently under active development.
+
+OpenVSLAM provides fairly good visual odometry based on point matching, by
+extracting ORB corners\cite{rublee2011orb} in each frame. It implements loop
+closure detection, based on a \gls{bow} model: loop closure candidates are
+searched among frames containing a sufficiently high number of corresponding
+visual words and are confirmed by geometric verification. If a suitable
+candidate is found, a loop closure edge is added to the pose graph, that is in
+turn optimised with g2o\cite{grisetti2011g2o}. This mechanism works reasonably
+in some environments, but it easily fails in presence of perceptual aliasing
+(e.g.\ when navigating through similar corridors in an office space), due to
+the lack of any mechanism to cope with outliers in the loop closure detection.
+
+Localisation is also based on \gls{bow}, by retrieving a frame with similar
+visual words and subsequently recovering the camera pose through \gls{pnp}.
+This approach works on a single session \gls{slam}, but it is likely not robust
+enough to handle multiple sessions with varying conditions (illumination,
+crowding, etc.) or image data from different sensors.
+
+While OpenVSLAM is reasonably (but not fully) optimised for speed, it is not
+optimised for memory usage. The map can be stored to disk in messagepack
+format, to be subsequently loaded in a new session, and it is kept in memory in
+a JSON structure, as most other data structures in the software, therefore
+incurring in a serious memory overhead. This is a limiting factor, making it
+impossible to map more than a couple floors of a building such as Kampusareena
+using a 32~GB laptop. Another limiting factor is the time required to perform
+\gls{ba}, that grows without bounds with the size of the pose graph, requiring
+several minutes to complete a loop closure on a map with a few thousand
+keyframes.
+
+\subsection{The Robot Operating System}
+
+\gls{ros}\footnote{\url{https://www.ros.org/}} is a software framework
+developed at Stanford University as a platform for robotic research. \gls{ros}
+has a modular design and allows to break a system into multiple, re-usable
+applications (e.g.\ controlling different sensors or peripherals). Applications
+can be distributed as \textit{packages} and are executed as \textit{nodes},
+communicating over the network so they can effectively run over different
+computers. \gls{ros} nodes communicate by sending network packages through
+streams called \textit{topics}, and through an \gls{rpc} call mechanism (known
+as \gls{ros} \textit{services}).
+
+\gls{ros} 1.x is released in \textit{distributions}, each of those is supported
+on specific versions of Ubuntu. \gls{ros} 2.x is the new generation system,
+which is largely incompatible with 1.x and it is meant to slowly replace it.
+
+A detailed introduction to the \gls{ros} is beyond the scope of the present
+document, and comprehensive documentation and tutorials are available on the
+official wiki.\footnote{\url{http://wiki.ros.org/}} If not familiar with
+\gls{ros}, a walk through the tutorials is highly
+recommended.\footnote{\url{http://wiki.ros.org/ROS/Tutorials}}
+
+\bibliography{bibliography}
+
+\end{document}
