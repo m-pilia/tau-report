@@ -1,4 +1,5 @@
 % chktex-file 3
+% chktex-file 13
 
 \documentclass[11pt, letterpaper, twoside]{article}
 \usepackage[utf8]{inputenc}
@@ -11,6 +12,7 @@
 \usepackage{cleveref}
 \usepackage{aligned-overset}
 \usepackage{booktabs}
+\usepackage{textcomp}
 \usepackage{changepage}
 \usepackage[acronym,toc,nogroupskip,nopostdot,seeautonumberlist,nonumberlist]{glossaries}
 
@@ -43,7 +45,7 @@
 \begin{abstract}
     This document is a brief report of activities performed between November 2019
     and January 2020, concerning the investigation of \gls{sota} tools
-    for \gls{slam} based on \gls{VIO}, meant to identify a suitable starting point
+    for \gls{slam} based on \gls{vio}, meant to identify a suitable starting point
     to implement indoor localisation solutions on mobile devices.
 \end{abstract}
 
@@ -63,55 +65,53 @@ tools, aimed to explore the current \gls{sota} and to identify a suitable
 starting point for further development of mobile localisation and mapping
 applications.
 
-\subsection{OpenVSLAM}
+\subsection{Intel RealSense}
 
-OpenVSLAM\cite{openvslam2019} is a \gls{slam} system developed at the National
-Institute of Advanced Science and Technology in Japan. It consists of a C++
-library based on OpenCV that allows to perform \gls{slam} based on pure visual
-odometry, and supports multiple camera configurations as input, including
-monocular, stereo, and RGB-D, with several lens models (pinhole, fisheye,
-equirectangular). While being very young, the project has good quality and
-coding standards, and it is currently under active development.
+Intel RealSense is a line of computer vision sensors aimed at robotics
+applications. The current generation includes the RealSense D415 and
+D435\footnote{A variant with 6 \gls{dof} \gls{imu} exists as D435i} depth
+cameras and the RealSense T265 tracking camera. A lidar sensor, the RealSense
+L515, is planned to the market in April 2020. Previous generations include the
+3D cameras F200, S200, and SR300.
 
-OpenVSLAM provides fairly good visual odometry based on point matching, by
-extracting ORB corners\cite{rublee2011orb} in each frame. It implements loop
-closure detection, based on a \gls{bow} model: loop closure candidates are
-searched among frames containing a sufficiently high number of corresponding
-visual words and are confirmed by geometric verification. If a suitable
-candidate is found, a loop closure edge is added to the pose graph, that is in
-turn optimised with g2o\cite{grisetti2011g2o}. This mechanism works reasonably
-in some environments, but it easily fails in presence of perceptual aliasing
-(e.g.\ when navigating through similar corridors in an office space), due to
-the lack of any mechanism to cope with outliers in the loop closure detection.
+The RealSense SDK (\texttt{librealsense}) is available as open source
+software\footnote{\url{https://github.com/IntelRealSense/librealsense}}, and a
+wide documentation is provided by
+Intel\footnote{\url{https://dev.intelrealsense.com/docs/docs-get-started}},
+together with a large collection of code samples (available in the GitHub
+repository) and tutorials. The SDK allows to seamlessly integrate multiple
+RealSense devices using a uniform API.
 
-Localisation is also based on \gls{bow}, by retrieving a frame with similar
-visual words and subsequently recovering the camera pose through \gls{pnp}.
-This approach works on a single session \gls{slam}, but it is likely not robust
-enough to handle multiple sessions with varying conditions (illumination,
-crowding, etc.) or image data from different sensors.
+In the lab, a RealSense D435 and a T265 are available. The D435 is a depth
+camera with one RGB two \gls{ir} sensors and an 87\textdegree{} \gls{fov}, that
+provide RGB and rectified grayscale stereo feeds (pinhole distortion model).
+The camera performs on-board computation of a depth map by \gls{sgm}, and it is
+equipped with an \gls{ir} projector that enhances the quality of the depth map,
+especially in textureless areas.\footnote{Since the \gls{ir} pattern creates
+    spurious features in the image, care should be put to disable it when using
+the stereo images in some applications (e.g.\ feature-based \gls{slam}).}
 
-While OpenVSLAM is reasonably (but not fully) optimised for speed, it is not
-optimised for memory usage. The map can be stored to disk in messagepack
-format, to be subsequently loaded in a new session, and it is kept in memory in
-a JSON structure, as most other data structures in the software, therefore
-incurring in a serious memory overhead. This is a limiting factor, making it
-impossible to map more than a couple floors of a building such as Kampusareena
-using a 32~GB laptop. Another limiting factor is the time required to perform
-\gls{ba}, that grows without bounds with the size of the pose graph, requiring
-several minutes to complete a loop closure on a map with a few thousand
-keyframes.
+The T265 is a tracking camera equipped with a 6 \gls{dof} \gls{imu} and a
+stereo pair of fisheye lens sensors having a 163\textdegree{} \gls{fov}.
+
+\subsection{MyntEye}
 
 \subsection{The Robot Operating System}
 
 \gls{ros}\footnote{\url{https://www.ros.org/}} is a software framework
-developed at Stanford University as a platform for robotic research. \gls{ros}
-has a modular design and allows to break a system into multiple, re-usable
-applications (e.g.\ controlling different sensors or peripherals). Applications
-can be distributed as \textit{packages} and are executed as \textit{nodes},
-communicating over the network so they can effectively run over different
-computers. \gls{ros} nodes communicate by sending network packages through
-streams called \textit{topics}, and through an \gls{rpc} call mechanism (known
-as \gls{ros} \textit{services}).
+developed at Stanford University as a platform for robotic research. Despite
+its name, it is not a true operating system, but rather a software framework
+that runs as a set of applications on Linux, Windows and Mac. \gls{ros} has a
+modular design and allows to break a robotic system into multiple, re-usable
+applications (e.g.\ controlling different sensors or peripherals).
+
+\gls{ros} applications can be distributed, built and installed as
+\textit{packages} handled with CMake using catkin, a collection of CMake macros
+that abstract the \gls{ros}-related boilerplate. Ros applications are executed
+as \textit{nodes}, communicating over the network so they can effectively run
+over different physical units. \gls{ros} nodes communicate by sending network
+packages through streams called \textit{topics}, and via an \gls{rpc} mechanism
+(known as \gls{ros} \textit{services}).
 
 \gls{ros} 1.x is released in \textit{distributions}, each of those is supported
 on specific versions of Ubuntu. \gls{ros} 2.x is the new generation system,
@@ -122,6 +122,140 @@ document, and comprehensive documentation and tutorials are available on the
 official wiki.\footnote{\url{http://wiki.ros.org/}} If not familiar with
 \gls{ros}, a walk through the tutorials is highly
 recommended.\footnote{\url{http://wiki.ros.org/ROS/Tutorials}}
+
+\subsection{OpenVSLAM}
+
+OpenVSLAM~\cite{openvslam2019} is a \gls{slam} system developed at the National
+Institute of Advanced Science and Technology in Japan. It consists of a C++
+library based on OpenCV that allows to perform \gls{slam} based on pure visual
+odometry, and supports multiple camera configurations as input, including
+monocular, stereo, and RGB-D, with several lens models (pinhole, fisheye,
+equirectangular). While being very young, the project has good quality and
+coding standards, and it is currently under active development.
+
+Detailed usage examples are
+provided\footnote{\url{https://openvslam.readthedocs.io/en/master/example.html}},
+that are ready to run on known benchmark datasets (such as
+Kitti~\cite{geiger2013vision} and TUM-VI~\cite{schubert2018vidataset}) or user
+data (e.g.\ on a video file). A Docker image and a \gls{ros} package are also
+provided by the authors.
+
+OpenVSLAM provides fairly good visual odometry based on point matching, by
+extracting ORB~\cite{rublee2011orb} corners in each frame. It implements loop
+closure detection, based on a \gls{bow} model: loop closure candidates are
+searched among frames containing a sufficiently high number of corresponding
+visual words and are confirmed by geometric verification. If a suitable
+candidate is found, a loop closure edge is added to the pose graph, that is in
+turn optimised with g2o~\cite{grisetti2011g2o}. This mechanism works reasonably
+in some environments, but it easily fails in presence of perceptual aliasing
+(e.g.\ when navigating through similar corridors in an office space), due to
+the lack of any mechanism to cope with outliers in the loop closure detection.
+
+Localisation is also based on \gls{bow}, by retrieving a frame with similar
+visual words and subsequently recovering the camera pose through \gls{pnp}.
+This approach works on a single session \gls{slam}, but it is likely not robust
+enough to handle localisation in multiple sessions with varying conditions
+(illumination, crowding, etc.) or image data from different sensors.
+
+While OpenVSLAM is reasonably optimised for speed, it is not optimised for
+memory usage. The map can be stored to disk in messagepack format, to be
+subsequently loaded in a new session, and it is kept in memory in a JSON
+structure, as most other data structures in the software, therefore incurring
+in a serious memory overhead. This is a limiting factor, making it impossible
+to map a space significantly larger than Kampusareena when using a laptop with
+32~GB of memory. Another limiting factor is the time required to perform
+\gls{ba}, that grows without bounds with the size of the pose graph, requiring
+several minutes to complete a loop closure on a map with a few thousand
+keyframes.
+
+\subsection{Kimera}
+
+Kimera~\cite{rosinol2019kimera} is a software library for semantic \gls{slam}
+implemented at the
+\gls{spark}.\footnote{\url{https://github.com/MIT-SPARK/Kimera}} It is composed
+of four modules:
+\begin{itemize}
+    \item
+        Kimera-VIO,\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO}} a
+        \gls{vio} library that implements the \gls{slam} frontend;
+    \item
+        Kimera-RPGO,\footnote{\url{https://github.com/MIT-SPARK/Kimera-RPGO}}
+        a library based on GTSAM~\cite{dellaert2006square,dellaert2012factor}
+        that implements pose graph optimisation for loop closures;
+    \item
+        Kimera-Mesher,\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO}}
+        a module that provides real-time mesh generation;
+    \item
+        Kimera-Semantics,\footnote{\url{https://github.com/MIT-SPARK/Kimera-Semantics}}
+        a library that adds real-time semantic labels to the mesh.
+\end{itemize}
+
+The library can be used to implement a standalone SLAM system, and a \gls{ros}
+package is provided by the
+authors.\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO-ROS}}.
+
+Kimera is a very young project and, at the time of writing, the code is not
+stable nor close to being production-ready. The odometry seems to be working
+but the loop closure integration in the \gls{slam} system seems to be currently
+broken. While the code may not be practical to be directly reused, at least for
+the moment, it is a noteworthy reference to previous work, especially with
+respect to the integration of real-time semantics in a \gls{slam} system. It
+also represents a real example of usage for GTSAM in a \gls{slam} system.
+
+The pose graph optimisation in Kimera-RPGO implements robust loop closures on
+top of GTSAM, with an outlier rejection mechanism~\cite{mangelson2018pairwise}.
+Being separated from the rest of the system, it is possible to easily re-use
+it or to have a well-defined baseline for experiments.
+
+\subsection{RTAB-Map}
+
+\gls{rtabmap}~\cite{labbe2019rtab} is a \gls{slam} framework developed at
+\gls{introlab}, Université de Sherbrooke. It is a mature and feature-rich
+framework, under active development, that provides:
+\begin{itemize}
+    \item visual \gls{slam} based on \gls{rgbd}, stereo, or lidar input;
+    \item multi-session mapping, built-in ability and tools to import,
+        manipulate, and export maps;
+    \item optimisation for mapping of large environments;
+    \item built-in integration with several odometry front-ends;
+    \item integration with several solvers for \gls{ba} and loop closure
+        (ceres,\footnote{\url{http://ceres-solver.org/}}
+        g2o~\cite{grisetti2011g2o}, GTSAM~\cite{dellaert2006square},
+        CVSBA\footnote{\url{https://www.uco.es/investiga/grupos/ava/node/39}}~\cite{lourakis2009sba});
+    \item integration of switchable constraints~\cite{sunderhauf2012switchable}
+        for robust loop closures
+        (Vertigo\footnote{\url{https://openslam-org.github.io/vertigo.html}});
+    \item out-of-the-box integration with several cameras, including ZED,
+        RealSense, and Kinect;
+    \item runs as a standalone GUI application or as a \gls{ros} node;
+    \item tools for debug and introspection;
+    \item a large number of options and tunable parameters;
+\end{itemize}
+
+Detailed documentation can be found on the GitHub
+wiki\footnote{\url{https://github.com/introlab/rtabmap/wiki}} for the
+standalone version and on the \gls{ros}
+wiki\footnote{\url{http://wiki.ros.org/rtabmap_ros}} for the \gls{ros} package
+(\texttt{rtabmap\_ros}).
+
+Pre-built binaries for both the standalone application and for the \gls{ros}
+package are available in the \gls{ros} Ubuntu repository, however the pre-built
+version is missing several optional components (e.g.~integration with GTSAM or
+RealSense). It is possible to check what components are built in the current
+version by running \texttt{rtabmap -{}-version}, and to enable more components
+it is necessary to build \gls{rtabmap} from source, after installing or
+building the desired components and making sure that the respective packages
+are detected by CMake.
+
+Besides the aforementioned documentation, further examples of usages are
+provided on the \gls{ros}
+wiki\footnote{\url{http://wiki.ros.org/rtabmap_ros/Tutorials/HandHeldMapping}}
+and on the RealSense
+wiki\footnote{\url{https://github.com/IntelRealSense/realsense-ros/wiki/SLAM-with-D435i}}.
+The latter example shows how to with an external sensor
+fusion library (using the \texttt{robot\_localization}
+package)\footnote{\url{http://wiki.ros.org/robot_localization}} to perform
+\gls{vio} externally and feed the resulting odometry to \gls{rtabmap}.
 
 \bibliography{bibliography}
 
