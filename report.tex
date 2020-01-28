@@ -27,7 +27,7 @@
 
 % \allowdisplaybreaks%
 
-\title{SLAM}
+\title{Handover report}
 \author{Martino Pilia}
 \date{\today}
 
@@ -49,7 +49,11 @@
     to implement indoor localisation solutions on mobile devices.
 \end{abstract}
 
+\newpage
+
 \tableofcontents
+
+\newpage
 
 \glsfindwidesttoplevelname[\acronymtype]
 \printglossary[type=\acronymtype,style=alttree,title=Abbreviations,nonumberlist]
@@ -65,63 +69,119 @@ tools, aimed to explore the current \gls{sota} and to identify a suitable
 starting point for further development of mobile localisation and mapping
 applications.
 
+\section{Tools and materials}
+
+\subsection{The Robot Operating System}
+
+\gls{ros}\footnote{\url{https://www.ros.org}} is a software framework
+developed at Stanford University as a platform for robotic research. Despite
+its name, it is not a true operating system, but rather a software framework
+that runs as a set of applications on Linux, Windows, or Mac. \gls{ros} has a
+modular design and allows to break a robotic system into multiple, re-usable
+applications (e.g.\ controlling different sensors or actuators).
+
+\gls{ros} applications can be distributed, built and installed as
+\textit{packages} whose build system, catkin, is a collection of CMake macros.
+Ros applications are executed as \textit{nodes}, communicating over the network
+so they can effectively run over different physical units. \gls{ros} nodes
+communicate by sending network packages through streams called \textit{topics},
+and via an \gls{rpc} mechanism (known as \gls{ros} \textit{services}).
+
+\gls{ros} is released in
+\textit{distributions},\footnote{\url{http://wiki.ros.org/Distributions}} each
+of those is supported on specific versions of Ubuntu. At the time of writing,
+\gls{ros} 1.x is still the most widely used. \gls{ros} 2.x is a new generation
+system, developed in parallel and largely incompatible with 1.x. In the
+following, only \gls{ros} 1.x will be used.
+
+A detailed introduction to the \gls{ros} is beyond the scope of the present
+document, and comprehensive documentation and tutorials are available on the
+official wiki.\footnote{\url{http://wiki.ros.org}} If not familiar with
+\gls{ros}, a walk through the tutorials is highly
+recommended.\footnote{\url{http://wiki.ros.org/ROS/Tutorials}}
+
+\subsection{Kalibr}\label{sec:kalibr}
+
+Kalibr is an open source tool developed at ETH Zürich for multi-camera,
+multi-IMU, and camera-IMU
+calibration.\footnote{\label{note:kalibr}\url{https://github.com/ethz-asl/kalibr}} Detailed
+instructions and a video-tutorial can be found on the Kalibr
+wiki.\footnote{\url{https://github.com/ethz-asl/kalibr/wiki}} The tool requires
+\gls{ros} to build, however a \gls{ros}-free binary distribution is available
+as a \gls{cde} package. Using \texttt{rosbag} is also the easiest way to
+collect calibration data.
+
+Kalibr supports multiple calibration targets, including April grid, circle
+grid, and checkerboard (the first is the most robust). When calibrating the
+distortion coefficients, it is recommended to use a highly flat target (e.g.\
+printed on a rigid and flat plate).
+
 \subsection{Intel RealSense}
 
 Intel RealSense is a line of computer vision sensors aimed at robotics
 applications. The current generation includes the RealSense D415 and
-D435\footnote{A variant with 6 \gls{dof} \gls{imu} exists as D435i} depth
+D435\footnote{A variant with 6 \gls{dof} \gls{imu} exists as D435i.} depth
 cameras and the RealSense T265 tracking camera. A lidar sensor, the RealSense
-L515, is planned to the market in April 2020. Previous generations include the
-3D cameras F200, S200, and SR300.
+L515, is planned to hit the market in April 2020. Previous generations include
+the 3D cameras F200, S200, and SR300.
 
 The RealSense SDK (\texttt{librealsense}) is available as open source
 software\footnote{\url{https://github.com/IntelRealSense/librealsense}}, and a
-wide documentation is provided by
+broad documentation is provided by
 Intel\footnote{\url{https://dev.intelrealsense.com/docs/docs-get-started}},
-together with a large collection of code samples (available in the GitHub
-repository) and tutorials. The SDK allows to seamlessly integrate multiple
-RealSense devices using a uniform API.
+together with a collection of code samples (available in the GitHub repository)
+and tutorials. The SDK allows to seamlessly integrate multiple RealSense
+devices using a uniform API.
 
 In the lab, a RealSense D435 and a T265 are available. The D435 is a depth
-camera with one RGB two \gls{ir} sensors and an 87\textdegree{} \gls{fov}, that
-provide RGB and rectified grayscale stereo feeds (pinhole distortion model).
-The camera performs on-board computation of a depth map by \gls{sgm}, and it is
-equipped with an \gls{ir} projector that enhances the quality of the depth map,
-especially in textureless areas.\footnote{Since the \gls{ir} pattern creates
-    spurious features in the image, care should be put to disable it when using
-the stereo images in some applications (e.g.\ feature-based \gls{slam}).}
+camera with one RGB and two \gls{ir} global shutter sensors (87\textdegree{}
+\gls{fov}), that provide RGB and rectified grayscale stereo feeds (pinhole
+distortion model, 50~mm baseline). The camera performs on-board computation of a
+depth map by \gls{sgm}, and it is equipped with an \gls{ir} projector that
+enhances the quality of the depth, especially in textureless
+areas.\footnote{Since the \gls{ir} pattern creates spurious features in the
+    image, care should be put to disable it when directly using the stereo
+    images in some applications (e.g.\ feature-based stereo \gls{slam}).}
 
 The T265 is a tracking camera equipped with a 6 \gls{dof} \gls{imu} and a
-stereo pair of fisheye lens sensors having a 163\textdegree{} \gls{fov}.
+stereo pair of fisheye lens sensors (163\textdegree{} \gls{fov}, 65~mm
+baseline). The camera implements an on-board visual-inertial \gls{slam} system
+(with loop closure and relocalisation) and provides as output the 6D pose,
+together with the raw streams for the two fisheye sensors, the gyroscope and
+the accelerometer.\footnote{The T265 is not a depth camera, and while it is
+    possible (on the host) to rectify the stereo images and compute a depth map
+    from them, the quality of such depth map is significantly inferior to the
+    depth camera. For an example of how to rectify fisheye images and perform
+    stereo matching, see the example in the \texttt{librealsense} SDK:
+\url{https://github.com/IntelRealSense/librealsense/blob/83f952a4bd/wrappers/python/examples/t265_stereo.py}}
+
+The depth and tracking cameras can be combined together for 3D reconstruction
+tasks. The 3D model of a support for both cameras is provided by
+Intel,\footnote{\url{https://github.com/IntelRealSense/librealsense/tree/3b14a5c/examples/tracking-and-depth}}
+together with a calibration
+matrix,\footnote{\url{https://github.com/IntelRealSense/librealsense/blob/3b14a5c876/examples/tracking-and-depth/H_t265_d400.cfg}}
+and a 3D-printed copy is already available in the lab. A calibration of the rig
+can be performed with Kalibr (\cref{sec:kalibr}) if necessary.
 
 \subsection{MyntEye}
 
-\subsection{The Robot Operating System}
+A MyntEye S 1030 stereo camera is available in the lab. It is equipped with two
+global shutter fisheye lens sensors (122\textdegree\texttimes76\textdegree,
+120~mm baseline), \gls{ir} projectors, and 6 \gls{dof} \gls{imu}. The SDK is
+available as open source
+software\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK}} and
+includes a \gls{ros}
+wrapper.\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK/tree/master/wrappers/ros}}
 
-\gls{ros}\footnote{\url{https://www.ros.org/}} is a software framework
-developed at Stanford University as a platform for robotic research. Despite
-its name, it is not a true operating system, but rather a software framework
-that runs as a set of applications on Linux, Windows and Mac. \gls{ros} has a
-modular design and allows to break a robotic system into multiple, re-usable
-applications (e.g.\ controlling different sensors or peripherals).
+Calibration of the distortion parameters needs to be performed manually with a
+tool provided by the
+manufacturer.\footnote{\url{https://mynt-eye-s-sdk.readthedocs.io/en/2.3.9/src/tools/calibration_tool.html}}
+Camera-IMU calibration can be performed with
+Kalibr.\textsuperscript{\ref{note:kalibr}}
 
-\gls{ros} applications can be distributed, built and installed as
-\textit{packages} handled with CMake using catkin, a collection of CMake macros
-that abstract the \gls{ros}-related boilerplate. Ros applications are executed
-as \textit{nodes}, communicating over the network so they can effectively run
-over different physical units. \gls{ros} nodes communicate by sending network
-packages through streams called \textit{topics}, and via an \gls{rpc} mechanism
-(known as \gls{ros} \textit{services}).
-
-\gls{ros} 1.x is released in \textit{distributions}, each of those is supported
-on specific versions of Ubuntu. \gls{ros} 2.x is the new generation system,
-which is largely incompatible with 1.x and it is meant to slowly replace it.
-
-A detailed introduction to the \gls{ros} is beyond the scope of the present
-document, and comprehensive documentation and tutorials are available on the
-official wiki.\footnote{\url{http://wiki.ros.org/}} If not familiar with
-\gls{ros}, a walk through the tutorials is highly
-recommended.\footnote{\url{http://wiki.ros.org/ROS/Tutorials}}
+While the higher baseline should give this camera more range, the quality of
+the depth map seems worse compared to the RealSense. The SDK and documentation
+are also less mature.
 
 \subsection{OpenVSLAM}
 
@@ -134,11 +194,10 @@ equirectangular). While being very young, the project has good quality and
 coding standards, and it is currently under active development.
 
 Detailed usage examples are
-provided\footnote{\url{https://openvslam.readthedocs.io/en/master/example.html}},
-that are ready to run on known benchmark datasets (such as
-Kitti~\cite{geiger2013vision} and TUM-VI~\cite{schubert2018vidataset}) or user
-data (e.g.\ on a video file). A Docker image and a \gls{ros} package are also
-provided by the authors.
+provided,\footnote{\url{https://openvslam.readthedocs.io/en/master/example.html}}
+ready to run on known benchmark datasets (such as Kitti~\cite{geiger2013vision}
+or TUM-VI~\cite{schubert2018vidataset}) or user data (e.g.\ on a video file). A
+Docker image and a \gls{ros} package are also provided by the authors.
 
 OpenVSLAM provides fairly good visual odometry based on point matching, by
 extracting ORB~\cite{rublee2011orb} corners in each frame. It implements loop
@@ -176,15 +235,16 @@ implemented at the
 of four modules:
 \begin{itemize}
     \item
-        Kimera-VIO,\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO}} a
+        Kimera-VIO,\footnote{\label{note:kimera_vio}\url{https://github.com/MIT-SPARK/Kimera-VIO}} a
         \gls{vio} library that implements the \gls{slam} frontend;
     \item
         Kimera-RPGO,\footnote{\url{https://github.com/MIT-SPARK/Kimera-RPGO}}
         a library based on GTSAM~\cite{dellaert2006square,dellaert2012factor}
         that implements pose graph optimisation for loop closures;
     \item
-        Kimera-Mesher,\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO}}
-        a module that provides real-time mesh generation;
+        Kimera-Mesher, a module that provides real-time mesh generation
+        (implemented in the Kimera-VIO
+        repository);\textsuperscript{\ref{note:kimera_vio}}
     \item
         Kimera-Semantics,\footnote{\url{https://github.com/MIT-SPARK/Kimera-Semantics}}
         a library that adds real-time semantic labels to the mesh.
@@ -200,16 +260,17 @@ but the loop closure integration in the \gls{slam} system seems to be currently
 broken. While the code may not be practical to be directly reused, at least for
 the moment, it is a noteworthy reference to previous work, especially with
 respect to the integration of real-time semantics in a \gls{slam} system. It
-also represents a real example of usage for GTSAM in a \gls{slam} system.
+also represents a real example of usage for GTSAM.
 
 The pose graph optimisation in Kimera-RPGO implements robust loop closures on
 top of GTSAM, with an outlier rejection mechanism~\cite{mangelson2018pairwise}.
-Being separated from the rest of the system, it is possible to easily re-use
-it or to have a well-defined baseline for experiments.
+Being separated from the rest of the system, it is possible to easily re-use it
+as a building block for a different \gls{slam} solution, or use it as a
+baseline for experiments on loop closure.
 
 \subsection{RTAB-Map}
 
-\gls{rtabmap}~\cite{labbe2019rtab} is a \gls{slam} framework developed at
+\gls{rtabmap}~\cite{labbe2019rtab} is a \gls{slam} framework developed at the
 \gls{introlab}, Université de Sherbrooke. It is a mature and feature-rich
 framework, under active development, that provides:
 \begin{itemize}
@@ -221,7 +282,7 @@ framework, under active development, that provides:
     \item integration with several solvers for \gls{ba} and loop closure
         (ceres,\footnote{\url{http://ceres-solver.org/}}
         g2o~\cite{grisetti2011g2o}, GTSAM~\cite{dellaert2006square},
-        CVSBA\footnote{\url{https://www.uco.es/investiga/grupos/ava/node/39}}~\cite{lourakis2009sba});
+        cvsba\footnote{\url{https://www.uco.es/investiga/grupos/ava/node/39}}~\cite{lourakis2009sba});
     \item integration of switchable constraints~\cite{sunderhauf2012switchable}
         for robust loop closures
         (Vertigo\footnote{\url{https://openslam-org.github.io/vertigo.html}});
@@ -247,15 +308,110 @@ it is necessary to build \gls{rtabmap} from source, after installing or
 building the desired components and making sure that the respective packages
 are detected by CMake.
 
-Besides the aforementioned documentation, further examples of usages are
+Besides of the aforementioned documentation, further examples of usage are
 provided on the \gls{ros}
 wiki\footnote{\url{http://wiki.ros.org/rtabmap_ros/Tutorials/HandHeldMapping}}
 and on the RealSense
 wiki\footnote{\url{https://github.com/IntelRealSense/realsense-ros/wiki/SLAM-with-D435i}}.
-The latter example shows how to with an external sensor
-fusion library (using the \texttt{robot\_localization}
-package)\footnote{\url{http://wiki.ros.org/robot_localization}} to perform
+The latter example shows how perform sensor fusion with an external library
+(using the \texttt{robot\_localization}
+package)\footnote{\url{http://wiki.ros.org/robot_localization}} to compute the
 \gls{vio} externally and feed the resulting odometry to \gls{rtabmap}.
+
+\section{Environment}
+
+The experiments were conducted on a Lenovo ThinkPad T480 laptop equipped with
+an Intel i7--8650U CPU and 32~GB of memory. The following instructions allow to
+set up the experimental environment.
+
+\begin{itemize}
+
+    \item Install Ubuntu 16.04 (Xenial). In this work, 16.04.6 was used.
+
+    \item Install \gls{ros} Kinetic from the \gls{ros} deb repository,
+        following the upstream instruction on the
+        wiki.\footnote{\url{http://wiki.ros.org/kinetic/Installation/Ubuntu}}
+
+    \item Install the \texttt{ros-kinetic-rqt-configure} package with
+        \texttt{apt}. This tool is not strictly necessary, but it is useful to
+        quickly inspect and change \gls{ros} parameters. Make sure that the
+        tool correctly works by launching it with
+        \begin{verbatim}
+            rosrun rqt_configure rqt_configure
+        \end{verbatim}
+        (a \texttt{roscore} instance needs to be running: if you are not sure
+        what this means, a walk through the \gls{ros} tutorials is recommended
+        before continuing).
+
+    \item Install \texttt{librealsense} from the Intel deb repository,
+        following the upstream instructions on
+        GitHub.\footnote{\url{https://github.com/IntelRealSense/librealsense/blob/e8cb6b4/doc/distribution_linux.md\#installing-the-packages}}
+        In this work, \texttt{librealsense} 1.32.0 was used.
+
+        After the installation, connect the RealSense devices, launch
+        \texttt{realsense-viewer}, and make sure that they are working
+        correctly. Ensure that the depth map and the stereo images are received
+        at the correct frame rate, stuttering or flickering can be symptoms of
+        low level problems (e.g.\ issues with the kernel modules, or
+        insufficient bandwidth on the USB controller).
+
+    \item Install \texttt{realsense-ros}. At the time of writing, this package
+        is not available as a binary distribution and needs to be built from
+        source. Create a catkin workspace and build it by following the
+        upstream instructions on
+        GitHub.\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d/README.md\#step-3-install-intel-realsense-ros-from-sources}}
+        In this work, \texttt{realsense-ros} 2.2.12 was used.
+
+        The workspace needs to be enabled in the shell when working with the
+        cameras. The following command (from the aforementioned instructions)
+        automatically enables it within any bash session:
+        \begin{verbatim}
+            echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+        \end{verbatim}
+        After the installation, make sure that \texttt{realsense-ros} is
+        correctly working by running one of the example launchfiles, for
+        instance the point cloud publisher\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d/README.md\#rgbd-point-cloud}}
+        \begin{verbatim}
+            roslaunch realsense2_camera rs_camera.launch filters:=pointcloud
+        \end{verbatim}
+        and in another shell launch \texttt{rviz} to display the point cloud.
+        In \texttt{rviz}, under the tree view displayed in the panel on the
+        left dock, set the \texttt{Fixed frame} (under \texttt{Global Options})
+        to \texttt{camera\_link}, and enable the point cloud by clicking the
+        \texttt{Add} button on the bottom left, in the dialog window switch to
+        the \texttt{By topic} tab, and select the \texttt{pointcloud2} topic
+        (under \texttt{depth\_registered/points}).\footnote{To get familiar
+        with \texttt{rviz}, a set of tutorials is available in the \gls{ros}
+        wiki at \url{http://wiki.ros.org/rviz/Tutorials}.}
+
+    \item Install \gls{rtabmap} and its \gls{ros} wrapper. The binary version
+        from the \gls{ros} deb repository was used in the experiments and it is
+        a good starting point
+        \begin{verbatim}
+            sudo apt-get install ros-kinetic-rtabmap ros-kinetic-rtabmap-ros
+        \end{verbatim}
+
+        Launch \texttt{rtabmap}, and if the installation was successful the GUI
+        should open.
+
+        The pre-build \gls{rtabmap} binary includes g2o and Vertigo support. Some
+        additional solvers (e.g.\ GTSAM, cvsba) and camera modules (e.g.\ to
+        use RealSense devices from the standalone application) require to build
+        \gls{rtabmap} from source, following upstream
+        instructions.\footnote{\url{https://github.com/introlab/rtabmap_ros/blob/5b3fe2f/README.md\#build-from-source}}
+        Before building from source, uninstall any existing \gls{rtabmap}
+        binary packages from the system, to avoid unintentionally linking to
+        the wrong libraries.
+
+        When generating the build files with CMake (before
+        running \texttt{make}), ensure that the desired components have been
+        detected by CMake and are included in the build, by either inspecting
+        the CMake console output or by opening the CMake cache and ensuring
+        that the variable \texttt{WITH\_XXX} is set to \texttt{ON} (where
+        \texttt{XXX} is the desired component, e.g.\ \texttt{GTSAM} or
+        \texttt{CVSBA}).
+
+\end{itemize}
 
 \bibliography{bibliography}
 
