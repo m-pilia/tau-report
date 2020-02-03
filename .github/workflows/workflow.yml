@@ -1,0 +1,26 @@
+name: Build
+
+on: push
+
+jobs:
+  chktex:
+    runs-on: ubuntu-latest
+    steps:
+    - name: ChkTeX
+      uses: actions/checkout@v1
+    - name: Build
+      run: |
+        make chktex
+  pdflatex:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+    - name: Build
+      run: |
+        make all
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: build-artifacts
+        path: build
