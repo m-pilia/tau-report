@@ -8,7 +8,7 @@ OUTPUTS = $(patsubst %,build/%.pdf,$(FILES))
 .PHONY: all
 all: $(OUTPUTS)
 
-$(OUTPUTS): build/%.pdf: %.tex
+$(OUTPUTS): build/%.pdf: %.tex bibliography.bib
 	rm -rf build
 	mkdir -p build
 	docker run \

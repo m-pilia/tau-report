@@ -14,9 +14,11 @@
 \usepackage{booktabs}
 \usepackage{textcomp}
 \usepackage{changepage}
-\usepackage[acronym,toc,nogroupskip,nopostdot,seeautonumberlist,nonumberlist]{glossaries}
+\usepackage[acronym,toc,nogroupskip,nopostdot,seeautonumberlist,nonumberlist,shortcuts]{glossaries}
 \usepackage{upquote,textcomp}
 \usepackage{subcaption}
+\usepackage{fancyvrb}
+\usepackage{placeins}
 
 \usepackage{pgfplots}
 \pgfplotsset{compat=newest}
@@ -31,7 +33,7 @@
 
 % \allowdisplaybreaks%
 
-\title{Handover report}
+\title{Report on recent SLAM solutions for large scale mapping}
 \author{Martino Pilia}
 \date{\today}
 
@@ -73,11 +75,28 @@ tools, aimed to explore the current \gls{sota} and to identify a suitable
 starting point for further development of mobile localisation and mapping
 applications.
 
-\subsection{Tools and materials}
+A large number of visual and visual-intertial \gls{slam} systems
+exist~\cite{huang2019survey}, many of them available as open source software.
+This work considers a few candidate systems and tests their applicability to
+generate a map of large-scale indoor environments that is suitable for
+localisation applications on portable devices. The selection is not exhaustive
+and includes \gls{rtabmap}~\cite{labbe2019rtab}, a tool for mapping and
+localisation selected because of its large amount of features, tools, and
+tunable parameters, OpenVSLAM~\cite{openvslam2019}, a visual \gls{slam} library
+selected because of its good quality and large variety of supported lens models
+and camera configurations, and Kimera~\cite{rosinol2019kimera}, selected
+because of its built-in support for robust loop closure detection and novel
+approach integrating semantic information in the \gls{slam} pipeline.
 
-\subsubsection{The Robot Operating System}
+This work does not include any quantitative evaluation, but it focuses on how
+to set-up and use the tools, and it is limited to qualitative evaluations in
+environments similar to the target ones.
 
-\gls{ros}\footnote{\url{https://www.ros.org}} is a software framework
+\section{Materials and methods}
+
+\subsection{\acs{ros}}
+
+The \glsfirst{ros}\footnote{\url{https://www.ros.org}} is a software framework
 developed at Stanford University as a platform for robotic research. Despite
 its name, it is not a true operating system, but rather a software framework
 that runs as a set of applications on Linux, Windows, or Mac. \gls{ros} has a
@@ -93,10 +112,10 @@ and via an \gls{rpc} mechanism (known as \gls{ros} \textit{services}).
 
 \gls{ros} is released in
 \textit{distributions},\footnote{\url{http://wiki.ros.org/Distributions}} each
-of those is supported on specific versions of Ubuntu. At the time of writing,
-\gls{ros} 1.x is still the most widely used. \gls{ros} 2.x is a new generation
-system, developed in parallel and largely incompatible with 1.x. In the
-following, only \gls{ros} 1.x will be used.
+one supported on specific versions of Ubuntu. At the time of writing, \gls{ros}
+1.x is still the most widely used. \gls{ros} 2.x is a new generation system,
+developed in parallel and largely incompatible with 1.x. In the following, only
+\gls{ros} 1.x will be used.
 
 A detailed introduction to the \gls{ros} is beyond the scope of the present
 document, and comprehensive documentation and tutorials are available on the
@@ -104,7 +123,7 @@ official wiki.\footnote{\url{http://wiki.ros.org}} If not familiar with
 \gls{ros}, a walk through the tutorials is highly
 recommended.\footnote{\url{http://wiki.ros.org/ROS/Tutorials}}
 
-\subsubsection{Kalibr}\label{sec:kalibr}
+\subsection{Kalibr}\label{sec:kalibr}
 
 Kalibr is an open source tool developed at ETH Zürich for multi-camera,
 multi-IMU, and camera-IMU
@@ -120,7 +139,7 @@ circle grid, and checkerboard (the first is the most robust). When calibrating
 the distortion coefficients, it is recommended to use a highly flat target
 (e.g.\ printed on a rigid and flat plate).
 
-\subsubsection{Intel RealSense}
+\subsection{Intel RealSense}\label{sec:realsense}
 
 Intel RealSense is a line of computer vision sensors aimed at robotics
 applications. The current generation includes the RealSense D415 and
@@ -174,7 +193,7 @@ and a 3D-printed copy is already available in the lab.\footnote{Such support
 A calibration of the rig can be performed with Kalibr (\cref{sec:kalibr}) if
 necessary.
 
-\subsubsection{MyntEye}
+\subsection{MyntEye}
 
 A MyntEye S 1030 stereo camera is available in the lab. It is equipped with two
 global shutter fisheye lens sensors (122\textdegree\texttimes76\textdegree,
@@ -192,11 +211,10 @@ Kalibr.\textsuperscript{\ref{note:kalibr}}
 
 While the higher baseline should give this camera more range, the quality of
 the depth map seems worse compared to the RealSense.\footnote{The camera
-available in the lab is likely to require a new calibration of the intrinsics,
-including the distortion coefficients.} The SDK and documentation are also less
-mature.
+available in the lab may require a new calibration of the intrinsics, including
+the distortion coefficients.} The SDK and documentation are also less mature.
 
-\subsubsection{ZED camera}
+\subsection{ZED camera}
 
 The ZED camera\footnote{\url{https://www.stereolabs.com/zed/}} is a stereo
 camera manufactured by ZED Labs. At Tampere University, some units are
@@ -208,7 +226,7 @@ as mapping and 3D scanning. The SDK is however proprietary, close source
 software. Another noteworthy limitation is that the depth map is computed on
 the host, and the SDK requires a CUDA-enabled Nvidia GPU to work.
 
-\subsubsection{OpenVSLAM}
+\subsection{OpenVSLAM}
 
 OpenVSLAM~\cite{openvslam2019} is a \gls{slam} system developed at the National
 Institute of Advanced Science and Technology in Japan. It consists of a C++
@@ -252,7 +270,7 @@ to map a space significantly larger than Kampusareena when using a laptop with
 several minutes to complete a loop closure on a map with a few thousand
 keyframes.
 
-\subsubsection{Kimera}
+\subsection{Kimera}
 
 Kimera~\cite{rosinol2019kimera} is a software library for semantic \gls{slam}
 implemented at the
@@ -293,17 +311,22 @@ Being separated from the rest of the system, it is possible to easily re-use it
 as a building block for a different \gls{slam} solution, or use it as a
 baseline for experiments on loop closure.
 
-\subsubsection{RTAB-Map}
+\subsection{\acs{rtabmap}}
 
 \gls{rtabmap}~\cite{labbe2019rtab} is a \gls{slam} framework developed at the
 \gls{introlab}, Université de Sherbrooke. It is a mature and feature-rich
 framework, under active development, that provides:
 \begin{itemize}
     \item visual \gls{slam} based on \gls{rgbd}, stereo, or lidar input;
+    \item built-in \gls{rgbd} odometry based on point features (including
+        support for SIFT~\cite{lowe1999object}, SURF~\cite{bay2006surf},
+        ORB~\cite{rublee2011orb}, and other algorithms);
     \item multi-session mapping, built-in ability and tools to import,
         manipulate, and export maps;
-    \item optimisation for mapping of large environments;
-    \item built-in integration with several odometry front-ends;
+    \item optimisation for mapping of large environments in real-time, with
+        bounded computing time per frame;
+    \item built-in integration with several odometry front-ends (LOAM, FOVIS,
+        Viso2, DVO, ORB\_SLAM2, OKVIS, MSCKF\_VIO, VINS-Fusion);
     \item integration with several solvers for \gls{ba} and loop closure
         (ceres,\footnote{\url{http://ceres-solver.org/}}
         g2o~\cite{grisetti2011g2o}, GTSAM~\cite{dellaert2006square},
@@ -317,6 +340,19 @@ framework, under active development, that provides:
     \item tools for debug and introspection;
     \item a large number of options and tunable parameters;
 \end{itemize}
+
+The built-in visual odometry of \gls{rtabmap} is based on point features and
+relies on depth information, accepting \gls{rgbd} or stereo input (in the
+latter case, depth is computed from stereo by \gls{sgm}). The built-in odometry
+is comparable to other visual \gls{slam} systems such as
+ORB-SLAM2~\cite{ragot2019benchmark}.
+
+\gls{rtabmap} produces a database file encoding the map, including keypoints,
+features, and images for the keyframes, whose default location is in
+\texttt{~/.ros/rtabmap.db}. While localisation is based on point features, it
+should be relatively straightforward to use the frames collected in an
+\gls{rtabmap} session to train a HF-Net~\cite{sarlin2019coarse} system in the
+attempt to devise a more robust global localisation method.
 
 Detailed documentation can be found on the GitHub
 wiki\footnote{\url{https://github.com/introlab/rtabmap/wiki}} for the
@@ -345,13 +381,26 @@ package)\footnote{\url{http://wiki.ros.org/robot_localization}} to compute the
 
 \section{Experiments}
 
-\subsection{Environment}
-
 The experiments were conducted on a Lenovo ThinkPad T480 laptop equipped with
 an Intel i7--8650U CPU and 32~GB of memory. Tests were conducted both on Arch
 Linux and Ubuntu 16.04. The following instructions allow to reproduce the
 experimental environment on Ubuntu 16.04 or 18.04.
 
+When reproducing the work it is recommended, even if not strictly necessary, to
+install and configure ccache, since it can greatly speed up repeated builds:
+\begin{Verbatim}[samepage=true]
+    sudo apt-get install -y ccache
+    sudo /usr/sbin/update-ccache-symlinks
+    echo 'export PATH="/usr/lib/ccache:$PATH"' > ~/.bashrc
+    source ~/.bashrc
+\end{Verbatim}
+
+\subsection{Mapping with \acs{rtabmap}}\label{sec:rtabmap-setup}
+
+\subsubsection{Installation}
+
+The following instructions allow to reproduce the set-up used to test
+\gls{rtabmap}:
 \begin{enumerate}
 
     \item A clean environment on Ubuntu 16.04 (Xenial) or 18.04 (Bionic) is
@@ -361,30 +410,21 @@ experimental environment on Ubuntu 16.04 or 18.04.
         \gls{ros} kinetic on Ubuntu 16.04, but it seems to work on \gls{ros}
         melodic on Ubuntu 18.04 as well, as long as the \gls{lts} Linux kernel
         is used (version 4.15, provided by the apt package
-        \texttt{linux-generic}). If replicating the results on Ubuntu 18.04, it
-        is necessary to replace Xenial with Bionic and \texttt{ros-kinetic}
+        \texttt{linux-generic}). When replicating the results on Ubuntu 18.04,
+        it is necessary to replace Xenial with Bionic and \texttt{ros-kinetic}
         with \texttt{ros-melodic} in the following instructions.
-
-    \item (Optional) While not strictly necessary, it is recommended to install
-        ccache, since it can greatly speeds up repeated builds.
-\begin{verbatim}
-sudo apt-get install -y ccache
-sudo /usr/sbin/update-ccache-symlinks
-echo 'export PATH="/usr/lib/ccache:$PATH"' > ~/.bashrc
-source ~/.bashrc
-\end{verbatim}
 
     \item Install \gls{ros} Kinetic from the \gls{ros} deb repository,
         following the upstream instruction on the
         wiki.\footnote{\url{http://wiki.ros.org/kinetic/Installation/Ubuntu}}
 
-    \item Install the \texttt{ros-kinetic-rqt-configure} package with
+    \item Install the \texttt{ros-kinetic-rqt-reconfigure} package with
         \texttt{apt}. This tool is not strictly necessary, but it is useful to
         quickly inspect and change \gls{ros} parameters. Make sure that the
         tool correctly works by launching it with
-\begin{verbatim}
-rosrun rqt_configure rqt_configure
-\end{verbatim}
+\begin{Verbatim}[samepage=true]
+    rosrun rqt_reconfigure rqt_reconfigure
+\end{Verbatim}
         (a \texttt{roscore} instance needs to be running: if you are not sure
         what this means, a walk through the \gls{ros} tutorials is recommended
         before continuing).
@@ -411,15 +451,15 @@ rosrun rqt_configure rqt_configure
         The workspace needs to be enabled in the shell when working with the
         cameras. The following command (from the aforementioned instructions)
         automatically enables it within any bash session:
-\begin{verbatim}
-echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
-\end{verbatim}
+\begin{Verbatim}[samepage=true]
+    echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
+\end{Verbatim}
         After the installation, make sure that \texttt{realsense-ros} is
         correctly working by running one of the example launchfiles, for
         instance the point cloud publisher\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d/README.md\#rgbd-point-cloud}}
-\begin{verbatim}
-roslaunch realsense2_camera rs_camera.launch filters:=pointcloud
-\end{verbatim}
+\begin{Verbatim}[samepage=true]
+    roslaunch realsense2_camera rs_camera.launch filters:=pointcloud
+\end{Verbatim}
         and in another shell launch \texttt{rviz} to display the point cloud.
         In \texttt{rviz}, under the tree view displayed in the panel on the
         left dock, set the \texttt{Fixed frame} (under \texttt{Global Options})
@@ -432,10 +472,10 @@ roslaunch realsense2_camera rs_camera.launch filters:=pointcloud
 
     \item Install \gls{rtabmap} and its \gls{ros} wrapper. The binary version
         from the \gls{ros} deb repository includes support for g2o and Vertigo,
-        and was used in the experiments
-\begin{verbatim}
-sudo apt-get install ros-kinetic-rtabmap ros-kinetic-rtabmap-ros
-\end{verbatim}
+        and was used in the experiments (with version 0.19.3)
+\begin{Verbatim}[samepage=true]
+    sudo apt-get install ros-kinetic-rtabmap ros-kinetic-rtabmap-ros
+\end{Verbatim}
 
         Launch \texttt{rtabmap}, and if the installation was successful the GUI
         should open.
@@ -457,29 +497,98 @@ sudo apt-get install ros-kinetic-rtabmap ros-kinetic-rtabmap-ros
         \texttt{XXX} is the desired component, e.g.\ \texttt{GTSAM} or
         \texttt{CVSBA}).
 
-    \item Install OpenCV 3.4 from source, following the upstream instructions
-        in the OpenVSLAM
-        documentation.\footnote{\url{https://openvslam.readthedocs.io/en/master/installation.html}}
-
-    \item Install the
-        MYNT-EYE-S-SDK.\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK}}
-        The SDK is available both as pre-build deb package or source
-        distribution. It is recommended to build it from source, in order to
-        avoid binary conflicts due to different versions of OpenCV, following
-        upstream
-        instructions.\footnote{\url{https://mynt-eye-s-sdk.readthedocs.io/en/latest/src/sdk/install_ubuntu_src.html}}
-
-    \item Install the MYNT-EYE-S-SDK \gls{ros} wrapper, following upstream
-        instructions.\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK/tree/master/wrappers/ros}}
-
-    \item (Optional) Install the ZED SDK following upstream
-        instructions.\footnote{\url{https://www.stereolabs.com/developers/release/}}
-        This is only required in order to use the ZED camera, and requires a
-        CUDA-enabled Nvidia GPU available on the host.
-
 \end{enumerate}
 
-\subsection{Mapping with OpenVSLAM}
+\subsubsection{Usage}
+
+To take advantage of the high quality visual-inertial odometry provided by the
+RealSense T265 tracking camera, it is possible to let \gls{rtabmap} read the
+odometry directly from the T265, together with the \gls{rgbd} input from the
+D435. \gls{rtabmap} performs bundle adjustment, loop closure detection, and
+builds the map and point cloud. The \texttt{realsense-ros} repository already
+provides a launch file named
+\texttt{rs\_rtabmap.launch},\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d9e/realsense2_camera/launch/rs_rtabmap.launch}}
+located in the \texttt{realsense2\_camera} package, that allows to run
+\gls{rtabmap} with this type of setup, creating one data-publishing \gls{ros}
+node for each RealSense device, a node to publish the transform between
+cameras, and a node that runs \gls{rtabmap} and starts \texttt{rviz} for
+real-time visualisation of the point cloud being generated. This can be started
+with:
+\begin{Verbatim}[samepage=true]
+    roslaunch realsense2_camera rs_rtabmap.launch
+\end{Verbatim}
+
+When terminating the program (e.g.\ from the console where it was launched, with
+\texttt{Ctrl+C}), \gls{rtabmap} automatically saves the map to the database
+located in \texttt{~/.ros/rtabmap.db}. By default, a clean database is created
+at startup, removing any previous data present in the database. To avoid this,
+and to allow incremental multi-session mapping, it is possible to remove the
+flag \texttt{-{}-delete\_db\_on\_start} form the \texttt{rtabmap\_args} argument
+in the \texttt{rs\_rtabmap.launch} file. When doing multi-session mapping, a
+new map is created at the start of a new session, and it is merged with
+the pre-existing map in the database as soon as a loop closure is established
+with the previous map.
+
+It is possible to inspect a database file using the
+\texttt{rtabmap-databaseViewer} tool, that comes as a part of an installation
+of \gls{rtabmap} and allows to visualise pose graph, feature extraction,
+matching, and loop closures:
+\begin{Verbatim}[samepage=true]
+    rtabmap-databaseViewer ~/.ros/rtabmap.db
+\end{Verbatim}
+The database can also be opened from within the \gls{rtabmap} GUI (``Open
+database\ldots'' from the ``File'' menu), that allows then to export the point
+cloud in PLY format.
+
+Since \gls{rtabmap} is already computing loop closures, it is useful to disable
+the on-board relocalisation on the T265 to avoid conflicts. This can be
+achieved by setting the corresponding \gls{ros} parameter to
+false\footnote{\url{https://github.com/m-pilia/realsense-ros/commit/6521e3f9738}}
+\begin{Verbatim}[samepage=true]
+    <rosparam>
+        /t265/tracking_module/enable_relocalization: false
+    </rosparam>
+\end{Verbatim}
+in the \texttt{rs\_rtabmap.lauch} launch file, located in
+\begin{Verbatim}[samepage=true]
+    "$CATKIN_WS"/src/realsense-ros/realsense2_camera/launch/rs_rtabmap.launch
+\end{Verbatim}
+where \texttt{\$CATKIN\_WS} is the location of the catkin workspace where the
+\texttt{realsense-ros} package was built. It is possible to use
+\texttt{rqt\_reconfigure} to check the value of the parameter while the system
+is running:
+\begin{Verbatim}[samepage=true]
+    rosrun rqt_reconfigure rqt_reconfigure
+\end{Verbatim}
+
+\gls{rtabmap} stores its parameters in the \texttt{~/.rtabmap/rtabmap.ini}. The
+parameters can be modified either in the configuration file or through the
+\gls{rtabmap} GUI application (taking care of saving the configuration before
+leaving the GUI). In the experiments, the g2o solver was used for pose graph
+optimisation, and robust loop closure detection with switchable constraints was
+enabled, corresponding to the following parameters:
+\begin{Verbatim}[samepage=true]
+    Optimizer\Robust = true
+    Optimizer\Strategy = 1
+\end{Verbatim}
+To use a custom configuration file when starting \gls{rtabmap}, it is possible
+to edit the \texttt{rs\_rtabmap.launch} file and add an argument
+\begin{Verbatim}[samepage=true]
+    <arg name="cfg" value="/path/to/rtabmap.ini" />
+\end{Verbatim}
+to the \texttt{<include>} tag that includes the \texttt{rtabmap.launch} file.
+
+In this experiment, the data was collected by fixing both cameras to the outer
+surface of the laptop lid, using duct tape, and without any extrinsic
+calibration. A more accurate data collection would require a rigid fix, to
+prevent the two cameras from moving with respect to each other, e.g.\ by using
+the mount described in~\cref{sec:realsense}. The transformation parameters
+between the two cameras can then be estimated and set in the
+\texttt{rs\_d400\_to\_t265.launch} file, in the line that defines the static
+transform publisher (and is set to a null transform by
+default).\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d9e01a/realsense2_camera/launch/rs_d400_and_t265.launch\#L48}}
+
+\subsection{Mapping with OpenVSLAM}\label{sec:openvslam-setup}
 
 OpenVSLAM was tested as a front-end for real-time mapping with the ZED, MYNT,
 and RealSense (both D435 and T265) cameras. In order to perform SLAM in
@@ -488,63 +597,78 @@ interface that allows to use the four cameras. Source code and instructions are
 available on GitHub.\footnote{\url{https://github.com/m-pilia/openvslam-example}}
 
 Note that this application is not production-quality code, but rather a fast
-prototype. It is lacking quality, features, and testing, and it was not
-designed with the idea of being published.
+prototype. It is lacking features and testing, and it was not designed with the
+idea of being published.
 
 \subsubsection{Build}
 
 The following instructions allow to reproduce the environment on Ubuntu 16.04
 or 18.04:\footnote{The repository has a continuous integration setup,
-performing cloud builds inside a Docker container. It is possible to check
-the Dockerfile located in the root of the repository to see a working
-example of build environment on Ubuntu.}
+performing cloud builds on GitHub Actions inside a Docker container. It is
+possible to check the Dockerfile located in the root of the repository to see a
+working example of build environment on Ubuntu.}
 \begin{enumerate}
     \item (Only on Ubuntu 16.04) Install an up-to-date version of CMake with
         support for C++17 (the default version 3.1 shipped with Ubuntu 16.04
         does not provide it).
-\begin{verbatim}
-wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null \
-    | sudo apt-key add -
-sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ xenial main'
-sudo apt-get update
-sudo apt-get install -y cmake
-\end{verbatim}
+\begin{Verbatim}[samepage=true]
+    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null \
+        | sudo apt-key add -
+    sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ xenial main'
+    sudo apt-get update
+    sudo apt-get install -y cmake
+\end{Verbatim}
 
     \item (Only on Ubuntu 16.04) Install a more recent version of gcc, since
         the one shipped with Ubuntu 16.04 (gcc 5.4) does not have full support
         for C++17.
-\begin{verbatim}
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-sudo apt-get update
-sudo apt-get install -y gcc-7 g++-7
-[ ! -f /usr/sbin/update-ccache-symlinks ] || sudo /usr/sbin/update-ccache-symlinks
-\end{verbatim}
+\begin{Verbatim}[samepage=true]
+    sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
+    sudo apt-get install -y gcc-7 g++-7
+    [ ! -f /usr/sbin/update-ccache-symlinks ] || sudo /usr/sbin/update-ccache-symlinks
+\end{Verbatim}
 
     \item Build and install the OpenVSLAM library and its dependencies,
         following upstream
         instructions.\footnote{\url{https://openvslam.readthedocs.io/en/master/installation.html}}
-        Note that OpenCV should already be installed if the environment setup
-        instructions were followed. After building OpenVSLAM, install it by
-        running \texttt{sudo make install} in the OpenVSLAM build
-        folder.\footnote{If you prefer, you can install it in a local folder
-        with \texttt{make DESTDIR=/some/local/folder install}; in that
-        case, remember to pass \texttt{openvslam\_DIR=/some/local/folder}
-        to CMake later, when building the \texttt{openvslam-example}
-        repository.} In these tests, OpenVSLAM up to commit \texttt{f2945209fc} was
-        used.
+        After building OpenVSLAM, install it by running \texttt{sudo make
+        install} in the OpenVSLAM build folder.\footnote{If you prefer,
+        you can install it in a local folder with \texttt{make
+        DESTDIR=/some/local/folder install}; in that case, remember to pass
+        \texttt{openvslam\_DIR=/some/local/folder} to CMake later, when
+        building the \texttt{openvslam-example} repository.} In these tests,
+        OpenVSLAM up to commit \texttt{f2945209fc} was used.
+
+    \item Install \texttt{librealsense} as described in
+        \cref{sec:rtabmap-setup}.
+
+    \item Install the
+        MYNT-EYE-S-SDK.\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK}}
+        The SDK is available both as pre-build deb package or source
+        distribution. It is recommended to build it from source after
+        installing OpenCV, in order to use the same version of the library and
+        avoid binary conflicts due to different versions of OpenCV, following
+        upstream
+        instructions.\footnote{\url{https://mynt-eye-s-sdk.readthedocs.io/en/latest/src/sdk/install_ubuntu_src.html}}
+
+    \item (Optional) Install the ZED SDK following upstream
+        instructions.\footnote{\url{https://www.stereolabs.com/developers/release/}}
+        This is only required in order to use the ZED camera, and requires a
+        CUDA-enabled Nvidia GPU on the host.
 
     \item Build the \texttt{openvslam-example} application. By default, support
         for RealSense and MYNT is built. It is possible to optionally build
         support for the ZED camera. The ZED module is however untested in its
         current state and may not work as intended.
-\begin{verbatim}
-git clone https://github.com/m-pilia/openvslam-example
-cd openvslam-example
-mkdir build && cd build
+\begin{Verbatim}[samepage=true]
+    git clone https://github.com/m-pilia/openvslam-example
+    cd openvslam-example
+    mkdir build && cd build
 
-cmake .. # To build ZED support, use: cmake .. -DCAMERA_SLAM_WITH_ZED=ON
-make -j"$(nproc)$"
-\end{verbatim}
+    cmake .. # To build ZED support, use: cmake .. -DCAMERA_SLAM_WITH_ZED=ON
+    make -j"$(nproc)$"
+\end{Verbatim}
 
 \end{enumerate}
 
@@ -552,9 +676,9 @@ make -j"$(nproc)$"
 
 The build procedure will produce a \texttt{camera\_slam} executable. To see the
 available parameters:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
     ./camera_slam --help
-\end{verbatim}
+\end{Verbatim}
 
 Running a \gls{slam} mapping session requires to provide a destination for the
 output map file, an ORB vocabulary,\footnote{A pre-built vocabulary can be
@@ -563,49 +687,47 @@ downloaded from the OpenVSLAM project at
 configuration file. Example configuration files are provided in the
 \texttt{param} folder in the repository.
 
-\begin{verbatim}
-./camera_slam \
-    -m RealSense \
-    -c ./param/realsense_stereo.yaml \
-    -v /path/to/the/orb/vocabulary \
-    -output-map-db map.msg
-\end{verbatim}
+\begin{Verbatim}[samepage=true]
+    ./camera_slam \
+        -m RealSense \
+        -c ./param/realsense_stereo.yaml \
+        -v /path/to/the/orb/vocabulary \
+        -output-map-db map.msg
+\end{Verbatim}
 
 If everything works correctly, a couple of windows should open, showing the
 pose graph and the current frame respectively (\cref{fig:openvslam_mapping}).
 
 \begin{figure}[tb]
     \centering
-    \begin{subfigure}[t]{.49\textwidth}
-        \includegraphics[width=\linewidth]{openvslam.png}
+    \begin{subfigure}[t]{.59\textwidth}
+        \centering
+        \includegraphics[height=5cm]{openvslam.png}
         \caption{Example mapping session.}\label{fig:openvslam_mapping}
     \end{subfigure}
-    \begin{subfigure}[t]{.49\textwidth}
-        \includegraphics[width=\linewidth]{load_map.png}
+    \begin{subfigure}[t]{.39\textwidth}
+        \centering
+        \includegraphics[height=5cm]{load_map.png}
         \caption{Example point cloud visualisation.}\label{fig:openvslam_load_map}
     \end{subfigure}
     \caption{Example of OpenVSLAM usage.}\label{fig:openvslam}
 \end{figure}
 
-\begin{figure}[h!]
-    \centering
-\end{figure}
-
 To run a pure localisation session, it is necessary to load a pre-built map:
 
-\begin{verbatim}
-./camera_slam \
-    --localization \
-    -m RealSense \
-    -c ./param/realsense_stereo.yaml \
-    -v /path/to/the/orb/vocabulary \
-    -input-map-db map.msg
-\end{verbatim}
+\begin{Verbatim}[samepage=true]
+    ./camera_slam \
+        --localization \
+        -m RealSense \
+        -c ./param/realsense_stereo.yaml \
+        -v /path/to/the/orb/vocabulary \
+        -input-map-db map.msg
+\end{Verbatim}
 
 The \texttt{-{}-output-video} and \texttt{-{}-input-video} flags allow to
 record and playback input data from file respectively. The output format
 depends on the camera used (SVO for the ZED camera, \gls{ros} bagfile for the
-ReRealSense, and a custom binary dump for the MYNT EYE\footnote{At the time of
+RealSense, and a custom binary dump for the MYNT EYE\footnote{At the time of
 writing, the MYNT EYE does not provide a raw data record and playback API,
 so a very simplified mechanism was implemented in this repository.}).
 
@@ -614,23 +736,132 @@ JSON), storing keypoints with descriptors and keyframes with pose graph. A
 simple Python tool is provided in the repository in order to inspect the map
 (\cref{fig:openvslam_load_map}).
 
-\begin{verbatim}
-# Install dependencies (example on Ubuntu 16.04)
-apt-get update -y
-apt-get install -y --no-install-recommends python3 python3-pip python3-pyqt5 \
-    python3-pyqt5.qtopengl python3-pyqt5.qtquick python3-setuptools python3-venv \
-    qml-module-* qmlscene
+\begin{Verbatim}[samepage=true]
+    # Install dependencies (example on Ubuntu 16.04)
+    apt-get update -y
+    apt-get install -y --no-install-recommends python3 python3-pip \
+        python3-pyqt5 python3-pyqt5.qtopengl python3-pyqt5.qtquick \
+        python3-setuptools python3-venv qml-module-* qmlscene
 
-# Setup virtual environment
-python3 -m venv ./scripts/.venv
-source ./scripts/.venv/bin/activate
-pip install -r ./scripts/requirements.txt
+    # Setup virtual environment
+    python3 -m venv ./scripts/.venv
+    source ./scripts/.venv/bin/activate
+    pip install -r ./scripts/requirements.txt
 
-# run the tool
-python ./scripts/read_map.py
-\end{verbatim}
+    # run the tool
+    python ./scripts/read_map.py
+\end{Verbatim}
 
-\subsubsection{Results}
+\subsection{Kimera-VIO}\label{sec:kimera-setup}
+
+Kimera-VIO was tested using the \gls{ros} wrapper provided by the authors, simply
+adding a launch file and configuration for the MyntEye~S~1030 camera.
+
+A working \gls{ros} environment is required. In this work, \gls{ros} Kinetic
+was used, and the environment should be already set up if the steps described
+in~\cref{sec:rtabmap-setup} were followed.
+
+\begin{enumerate}
+    \item Install the MYNT-EYE-S-SDK as described in \cref{sec:openvslam-setup}.
+
+    \item Install the MYNT-EYE-S-SDK \gls{ros} wrapper, following upstream
+        instructions.\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK/tree/master/wrappers/ros}}
+\end{enumerate}
+
+Launch and configuration files for the MYNT EYE S camera are available on a
+fork of the Kimera-VIO-ROS repository, branch
+\texttt{mynt-eye-s}.\footnote{\url{https://github.com/m-pilia/Kimera-VIO-ROS/tree/mynt-eye-s}}
+
+\begin{Verbatim}[samepage=true]
+    git clone https://github.com/m-pilia/Kimera-VIO-ROS
+    cd Kimera-VIO-ROS
+    git checkout mynt-eye-s
+\end{Verbatim}
+
+To reproduce the results, do not follow upstream build instructions, but rather
+the instructions provided in the \texttt{README.md} file in the aforementioned
+branch,\footnote{\url{https://github.com/m-pilia/Kimera-VIO-ROS/blob/mynt-eye-s/README.md}}
+since they contain some corrections to address issues with the build.
+
+To launch the Kimera SLAM system, after building the \gls{ros} package, start
+the MYNT EYE wrapper and then use the following launch file (provided in the
+same \texttt{mynt-eye-s} branch):
+\begin{Verbatim}[samepage=true]
+    roslaunch mynt_eye_ros_wrapper display.launch
+    roslaunch kimera_vio_ros kimera_ros_mymynt.launch
+\end{Verbatim}
+
+\section{Results}
+
+\subsection{\acs{rtabmap}}
+
+\begin{figure}[tb]
+    \centering
+
+    \includegraphics[width=\textwidth]{rtabmap_hervanta.png}
+    \caption{%
+        Point cloud of four buildings in Hervanta Campus, generated with \gls{rtabmap}.
+    }\label{fig:rtabmap_hervanta}
+
+    \vspace{0.5em}
+
+    \includegraphics[width=\textwidth]{rtabmap_hervanta_detail.png}
+    \caption{Detail of the point cloud in~\cref{fig:rtabmap_hervanta}.}\label{fig:rtabmap_hervanta_detail}
+
+    \vspace{0.5em}
+
+    \begin{subfigure}[t]{.34\textwidth}
+        \centering
+        \includegraphics[height=4cm]{corridor}
+        \caption{Floor plan.}\label{fig:rtabmap_lc_floorplan}
+    \end{subfigure}%
+    \begin{subfigure}[t]{.19\textwidth}
+        \centering
+        \includegraphics[height=4cm]{rtabmap_without_sc.png}
+        \caption{Map without SC.}\label{fig:rtabmap_lc_without_sc}
+    \end{subfigure}%
+    \begin{subfigure}[t]{.44\textwidth}
+        \centering
+        \includegraphics[height=4cm]{rtabmap_with_sc.png}
+        \caption{Map with SC.}\label{fig:rtabmap_lc_with_sc}
+    \end{subfigure}
+
+    \caption{%
+        Effect of switchable constraints on loop closure detection when
+        scanning a corridor in an office space with \gls{rtabmap}. The g2o
+        solver was used for pose graph optimisation.
+    }\label{fig:rtabmap_lc}
+\end{figure}
+
+\gls{rtabmap} was tested in indoor environments. A mapping session was
+conducted walking for about 2.4~km through four buildings of the Hervanta
+campus, Tampere University. The two lower floors of Kampusareena were mapped,
+together with the two lower floors of the main building, the first floor of
+Rakennustalo, and part of the first floor of Sähkötalo. The mapping session
+took about one hour and produced 1.2 million keypoints and a pose graph with
+3300 nodes, with a resulting database of size equal to 1.3~GB. The result is
+presented in~\cref{fig:rtabmap_hervanta,fig:rtabmap_hervanta_detail}.
+
+\gls{rtabmap} was able to handle the large environment and all loop closures,
+despite of very long loops, with no false positives. The program required a
+relatively modest amount of resources, using only about 4~GB of memory.
+
+This mapping was meant to demonstrate the applicability of \gls{rtabmap} rather
+than to generate an optimal point cloud, and it was performed in sub-optimal
+conditions due to the crowded environment, that caused the presence of
+bystanders and moving passer-bys in the point cloud. Moreover, the scanning
+intentionally did not cover all surfaces encountered in the environments, in
+order to save time, therefore the point cloud is incomplete and has holes in
+it.
+
+The importance of using a robust loop closure method is shown in a smaller
+experiment, mapping a corridor in an office space in the third floor of the
+Tietotalo building, where wrong loop closures are established due to perceptual
+aliasing in repetitive environments~\cite{lajoie2019modeling}, if switchable
+constraints are not used in the pose graph optimisation
+(\cref{fig:rtabmap_lc}).
+
+\FloatBarrier{}
 
 \bibliography{bibliography}
 
