@@ -34,7 +34,8 @@
 % \allowdisplaybreaks%
 
 \title{Report on recent SLAM solutions for large scale mapping}
-\author{Martino Pilia}
+\author{Martino Pilia\\{\small Faculty of Information
+Technology and Communication Sciences, Tampere University}}
 \date{\today}
 
 \newglossary[symg]{symbol}{syms}{symo}{Symbols}
@@ -89,8 +90,10 @@ because of its built-in support for robust loop closure detection and novel
 approach integrating semantic information in the \gls{slam} pipeline.
 
 This work does not include any quantitative evaluation, but it focuses on how
-to set-up and use the tools, and it is limited to qualitative evaluations in
-environments similar to the target ones.
+to set-up and use the tools, and it is limited to qualitative evaluations.
+Image data was not stored for most experiments, also to respect the privacy of
+bystanders and passer-bys since most work was performed in crowded
+environments.
 
 \section{Materials and methods}
 
@@ -105,10 +108,11 @@ applications (e.g.\ controlling different sensors or actuators).
 
 \gls{ros} applications can be distributed, built and installed as
 \textit{packages} whose build system, catkin, is a collection of CMake macros.
-Ros applications are executed as \textit{nodes}, communicating over the network
-so they can effectively run over different physical units. \gls{ros} nodes
-communicate by sending network packages through streams called \textit{topics},
-and via an \gls{rpc} mechanism (known as \gls{ros} \textit{services}).
+\gls{ros} applications are executed as \textit{nodes}, communicating over the
+network so they can effectively run over different physical units. \gls{ros}
+nodes communicate by sending network packages through streams called
+\textit{topics}, and via a \gls{rpc} mechanism (known as \gls{ros}
+\textit{services}).
 
 \gls{ros} is released in
 \textit{distributions},\footnote{\url{http://wiki.ros.org/Distributions}} each
@@ -141,6 +145,25 @@ the distortion coefficients, it is recommended to use a highly flat target
 
 \subsection{Intel RealSense}\label{sec:realsense}
 
+\begin{figure}[tb]
+    \centering
+    \begin{minipage}[t]{.49\textwidth}
+        \centering
+        \includegraphics[height=4cm]{t265_raw.png}
+        \caption{%
+            Raw data from the T265.
+        }\label{fig:t265_raw}
+    \end{minipage}%
+    \begin{minipage}[t]{.49\textwidth}
+        \centering
+        \includegraphics[height=4cm]{t265_depth.png}
+        \caption{%
+            Example of rectification and depth from stereo using the
+            fisheye streams.
+        }\label{fig:t265_depth}
+    \end{minipage}%
+\end{figure}
+
 Intel RealSense is a line of computer vision sensors aimed at robotics
 applications. The current generation includes the RealSense D415 and
 D435\footnote{A variant with 6 \gls{dof} \gls{imu} exists as D435i.} depth
@@ -171,11 +194,12 @@ stereo pair of fisheye lens sensors (163\textdegree{} \gls{fov}, 65~mm
 baseline). The camera implements an on-board visual-inertial \gls{slam} system
 (with loop closure and relocalisation) and provides as output the 6D pose,
 together with the raw streams for the two fisheye sensors, the gyroscope and
-the accelerometer.\footnote{The T265 is not a depth camera, and while it is
-    possible (on the host) to rectify the stereo images and compute a depth map
-    from them, the quality of such depth map is significantly inferior to the
-    depth camera. For an example of how to rectify fisheye images and perform
-    stereo matching, see the example in the \texttt{librealsense} SDK:
+the accelerometer (\cref{fig:t265_raw}).\footnote{The T265 is not a depth
+camera, and while it is possible (on the host) to rectify the stereo images
+and compute a depth map from them, the quality of such depth map is
+significantly inferior to the depth camera (\cref{fig:t265_depth}). For an
+example of how to rectify fisheye images and perform stereo matching,
+see the example in the \texttt{librealsense} SDK:
 \url{https://github.com/IntelRealSense/librealsense/blob/83f952a4bd/wrappers/python/examples/t265_stereo.py}}
 
 The depth and tracking cameras can be combined together for 3D reconstruction
@@ -298,12 +322,13 @@ package is provided by the
 authors.\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO-ROS}}.
 
 Kimera is a very young project and, at the time of writing, the code is not
-stable nor close to being production-ready. The odometry seems to be working
-but the loop closure integration in the \gls{slam} system seems to be currently
-broken. While the code may not be practical to be directly reused, at least for
-the moment, it is a noteworthy reference to previous work, especially with
-respect to the integration of real-time semantics in a \gls{slam} system. It
-also represents a real example of usage for GTSAM.
+stable. The odometry seems to be working but the loop closure integration in
+the \gls{slam} system seems to be currently
+broken.\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO-ROS/issues/37}}
+While the code may not be practical to be directly reused, at least for the
+moment, it is a noteworthy reference to previous work, especially with respect
+to the integration of real-time semantics in a \gls{slam} system. It also
+represents a real example of usage for GTSAM.
 
 The pose graph optimisation in Kimera-RPGO implements robust loop closures on
 top of GTSAM, with an outlier rejection mechanism~\cite{mangelson2018pairwise}.
@@ -328,16 +353,17 @@ framework, under active development, that provides:
     \item built-in integration with several odometry front-ends (LOAM, FOVIS,
         Viso2, DVO, ORB\_SLAM2, OKVIS, MSCKF\_VIO, VINS-Fusion);
     \item integration with several solvers for \gls{ba} and loop closure
-        (ceres,\footnote{\url{http://ceres-solver.org/}}
-        g2o~\cite{grisetti2011g2o}, GTSAM~\cite{dellaert2006square},
+        (ceres~\cite{ceres-solver}, g2o~\cite{grisetti2011g2o},
+        GTSAM~\cite{dellaert2006square},
         cvsba\footnote{\url{https://www.uco.es/investiga/grupos/ava/node/39}}~\cite{lourakis2009sba});
     \item integration of switchable constraints~\cite{sunderhauf2012switchable}
         for robust loop closures
         (Vertigo\footnote{\url{https://openslam-org.github.io/vertigo.html}});
     \item out-of-the-box integration with several cameras, including ZED,
         RealSense, and Kinect;
-    \item runs as a standalone GUI application or as a \gls{ros} node;
-    \item tools for debug and introspection;
+    \item runs as a standalone GUI application (Android, Linux, Mac, Windows)
+        or as a \gls{ros} node;
+    \item tools for debugging and introspection;
     \item a large number of options and tunable parameters;
 \end{itemize}
 
@@ -349,7 +375,7 @@ ORB-SLAM2~\cite{ragot2019benchmark}.
 
 \gls{rtabmap} produces a database file encoding the map, including keypoints,
 features, and images for the keyframes, whose default location is in
-\texttt{~/.ros/rtabmap.db}. While localisation is based on point features, it
+\texttt{\textasciitilde/.ros/rtabmap.db}. While localisation is based on point features, it
 should be relatively straightforward to use the frames collected in an
 \gls{rtabmap} session to train a HF-Net~\cite{sarlin2019coarse} system in the
 attempt to devise a more robust global localisation method.
@@ -520,7 +546,7 @@ with:
 
 When terminating the program (e.g.\ from the console where it was launched, with
 \texttt{Ctrl+C}), \gls{rtabmap} automatically saves the map to the database
-located in \texttt{~/.ros/rtabmap.db}. By default, a clean database is created
+located in \texttt{\textasciitilde/.ros/rtabmap.db}. By default, a clean database is created
 at startup, removing any previous data present in the database. To avoid this,
 and to allow incremental multi-session mapping, it is possible to remove the
 flag \texttt{-{}-delete\_db\_on\_start} form the \texttt{rtabmap\_args} argument
@@ -561,12 +587,15 @@ is running:
     rosrun rqt_reconfigure rqt_reconfigure
 \end{Verbatim}
 
-\gls{rtabmap} stores its parameters in the \texttt{~/.rtabmap/rtabmap.ini}. The
-parameters can be modified either in the configuration file or through the
-\gls{rtabmap} GUI application (taking care of saving the configuration before
-leaving the GUI). In the experiments, the g2o solver was used for pose graph
-optimisation, and robust loop closure detection with switchable constraints was
-enabled, corresponding to the following parameters:
+\gls{rtabmap} stores its parameters in the
+\texttt{\textasciitilde/.rtabmap/rtabmap.ini}. The parameters can be modified
+either in the configuration file or through the \gls{rtabmap} GUI application
+(taking care of saving the configuration before leaving the GUI). In the
+experiments, the g2o solver was used for pose graph optimisation, and robust
+loop closure detection with switchable constraints was enabled, corresponding
+to the following parameters:\footnote{A copy of the parameter file used in the data
+collection is available at
+\url{https://github.com/m-pilia/phd-handover-report/blob/master/data/rtabmap.ini}}
 \begin{Verbatim}[samepage=true]
     Optimizer\Robust = true
     Optimizer\Strategy = 1
@@ -592,9 +621,10 @@ default).\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d
 
 OpenVSLAM was tested as a front-end for real-time mapping with the ZED, MYNT,
 and RealSense (both D435 and T265) cameras. In order to perform SLAM in
-real-time, a small application was implemented, together with an abstract
-interface that allows to use the four cameras. Source code and instructions are
-available on GitHub.\footnote{\url{https://github.com/m-pilia/openvslam-example}}
+real-time, a small prototype was implemented, with an abstract interface that
+allows to use any of the four cameras. Source code and instructions are
+available on
+GitHub.\footnote{\url{https://github.com/m-pilia/openvslam-example}}
 
 Note that this application is not production-quality code, but rather a fast
 prototype. It is lacking features and testing, and it was not designed with the
@@ -732,7 +762,7 @@ writing, the MYNT EYE does not provide a raw data record and playback API,
 so a very simplified mechanism was implemented in this repository.}).
 
 The map is stored by OpenVSLAM as a messagepack dump (i.e.\ binary compressed
-JSON), storing keypoints with descriptors and keyframes with pose graph. A
+JSON), storing 3D keypoints with descriptors and keyframes with pose graph. A
 simple Python tool is provided in the repository in order to inspect the map
 (\cref{fig:openvslam_load_map}).
 
@@ -751,6 +781,9 @@ simple Python tool is provided in the repository in order to inspect the map
     # run the tool
     python ./scripts/read_map.py
 \end{Verbatim}
+
+Note that OpenVSLAM does not produce a dense 3D reconstruction, so additional
+work is required to build a dense RGB point cloud on top of the map.
 
 \subsection{Kimera-VIO}\label{sec:kimera-setup}
 
@@ -784,8 +817,8 @@ branch,\footnote{\url{https://github.com/m-pilia/Kimera-VIO-ROS/blob/mynt-eye-s/
 since they contain some corrections to address issues with the build.
 
 To launch the Kimera SLAM system, after building the \gls{ros} package, start
-the MYNT EYE wrapper and then use the following launch file (provided in the
-same \texttt{mynt-eye-s} branch):
+the MYNT EYE wrapper and then use the \texttt{kimera\_ros\_mymynt.launch} file
+(provided in the same \texttt{mynt-eye-s} branch):
 \begin{Verbatim}[samepage=true]
     roslaunch mynt_eye_ros_wrapper display.launch
     roslaunch kimera_vio_ros kimera_ros_mymynt.launch
@@ -795,20 +828,58 @@ same \texttt{mynt-eye-s} branch):
 
 \subsection{\acs{rtabmap}}
 
+\gls{rtabmap} was tested in indoor environments. A mapping session was
+conducted walking for about 2.4~km through four buildings of the Hervanta
+campus, Tampere University (\cref{fig:campus_map}). The two lower floors of
+Kampusareena were mapped, together with the two lower floors of the main
+building, the first floor of Rakennustalo, and part of the first floor of
+Sähkötalo. The mapping session took about one hour and produced 1.2 million
+keypoints and a pose graph with 3300 nodes, with a resulting database of size
+equal to 1.3~GB. The result is presented
+in~\cref{fig:rtabmap_hervanta,fig:rtabmap_hervanta_detail}.
+
+\gls{rtabmap} was able to handle the large environment and all loop closures,
+despite of very long loops, with no false positives. The program required a
+relatively modest amount of resources, using only about 4~GB of memory.
+
+This experiment was meant to demonstrate the applicability of \gls{rtabmap}
+rather than to generate an optimal point cloud, and it was performed in
+sub-optimal conditions due to the crowded environment, that caused the presence
+of bystanders and moving passer-bys in the point cloud. Moreover, the scanning
+intentionally did not cover all surfaces encountered in the environments, in
+order to save time, therefore the point cloud is incomplete and has holes in
+it.
+
+The importance of using a robust loop closure method is shown in a smaller
+experiment, mapping a corridor in an office space in the third floor of the
+Tietotalo building, where wrong loop closures are established due to perceptual
+aliasing in repetitive environments~\cite{lajoie2019modeling}, if switchable
+constraints~\cite{sunderhauf2012switchable} are not used in the pose graph
+optimisation (\cref{fig:rtabmap_lc}).
+
+\begin{figure}[tb]
+    \centering
+    \includegraphics[width=0.9\linewidth]{campus_map.jpg}
+    \caption{Map of Hervanta Campus, Tampere University.}\label{fig:campus_map}
+\end{figure}
+
 \begin{figure}[tb]
     \centering
 
     \includegraphics[width=\textwidth]{rtabmap_hervanta.png}
     \caption{%
-        Point cloud of four buildings in Hervanta Campus, generated with \gls{rtabmap}.
+        Point cloud of four buildings in Hervanta Campus
+        (\cref{fig:campus_map}), generated with \gls{rtabmap}.
     }\label{fig:rtabmap_hervanta}
 
-    \vspace{0.5em}
+    \vspace{1em}
 
     \includegraphics[width=\textwidth]{rtabmap_hervanta_detail.png}
-    \caption{Detail of the point cloud in~\cref{fig:rtabmap_hervanta}.}\label{fig:rtabmap_hervanta_detail}
+    \caption{%
+        Detail of Kampusareena in the point cloud in~\cref{fig:rtabmap_hervanta}.
+    }\label{fig:rtabmap_hervanta_detail}
 
-    \vspace{0.5em}
+    \vspace{1em}
 
     \begin{subfigure}[t]{.34\textwidth}
         \centering
@@ -833,33 +904,160 @@ same \texttt{mynt-eye-s} branch):
     }\label{fig:rtabmap_lc}
 \end{figure}
 
-\gls{rtabmap} was tested in indoor environments. A mapping session was
-conducted walking for about 2.4~km through four buildings of the Hervanta
-campus, Tampere University. The two lower floors of Kampusareena were mapped,
-together with the two lower floors of the main building, the first floor of
-Rakennustalo, and part of the first floor of Sähkötalo. The mapping session
-took about one hour and produced 1.2 million keypoints and a pose graph with
-3300 nodes, with a resulting database of size equal to 1.3~GB. The result is
-presented in~\cref{fig:rtabmap_hervanta,fig:rtabmap_hervanta_detail}.
+\subsection{OpenVSLAM}
 
-\gls{rtabmap} was able to handle the large environment and all loop closures,
-despite of very long loops, with no false positives. The program required a
-relatively modest amount of resources, using only about 4~GB of memory.
+\subsubsection{Mapping in presence of visual aliasing}
 
-This mapping was meant to demonstrate the applicability of \gls{rtabmap} rather
-than to generate an optimal point cloud, and it was performed in sub-optimal
-conditions due to the crowded environment, that caused the presence of
-bystanders and moving passer-bys in the point cloud. Moreover, the scanning
-intentionally did not cover all surfaces encountered in the environments, in
-order to save time, therefore the point cloud is incomplete and has holes in
-it.
+Since OpenVSLAM does not implement any mechanism to cope with outliers in loop
+closure detection, one limitation is that it can introduce wrong loop closures
+in presence of visual aliasing. A smaller experiment was conducted by mapping
+the corridor of an office space in the third floor of Tietotalo, Hervanta
+Campus (\cref{fig:campus_map}).
 
-The importance of using a robust loop closure method is shown in a smaller
-experiment, mapping a corridor in an office space in the third floor of the
-Tietotalo building, where wrong loop closures are established due to perceptual
-aliasing in repetitive environments~\cite{lajoie2019modeling}, if switchable
-constraints are not used in the pose graph optimisation
-(\cref{fig:rtabmap_lc}).
+Results are shown in \cref{fig:openvslam_lc}. When loop closure detection was
+enabled, wrong loop closures were established between similar looking
+corridors. When disabling loop closures, a relatively large drift was observed
+in the resulting map.
+
+\subsubsection{Mapping in large indoor environments}
+
+An experiment was conducted by mapping first and second floor of Kampusareena
+and the corridor going from Kampusareena to the third floor of Tietotalo, using
+as input the rectified stereo pair from the ZED camera. The resulting map,
+composed of 223~725 keypoints, is shown in
+\cref{fig:openvslam_kampusareena_top,fig:openvslam_kampusareena_side}.
+
+It is possible to observe some drift, for instance between the two floors of
+Kampusareena in the circular balconies. A certain amount of drift was also
+observed in the stairwell of Tietotalo, in the long corridor in Sähkötalo, and
+in the bridge between Sähkötalo and Kampusareena. This could have however been
+reduced with more frequent loop closures.
+
+\subsubsection{Mapping and localisation in Kampusareena}
+
+Another experiment was conducted to generate a more accurate map of the first
+and second floor of Kampusareena, also using input from the ZED camera. The
+data was collected early in the morning, with no passer-bys or people in the
+scene. The cloud of keypoints is shown in
+\cref{fig:openvslam_kampusareena_map_top,fig:openvslam_kampusareena_map_side}.
+The map consists of 396~723 keypoints and was generated with about 2 hours of
+data collection. Memory usage increased with the size of the map, peaking at
+over 20~GB. Moreover, the computing time required to perform bundle adjustment
+for loop closures grew with the size of the map, taking several minutes
+
+A video demonstration of localisation in this map is available at
+\url{https://github.com/m-pilia/phd-handover-report/blob/master/data/localisation_stereo.mp4}.
+The video contains a sequence of short clips, and for each clip global
+localisation was attempted. The video is not edited and the clips are shown in
+their entirety, the jumps are due to the fact that the clips were collected
+non-contiguously. These data were collected with the same camera used in the
+mapping, but at a different time of the day, with more crowded environment, and
+shops open, with lights on and shutters raised up or doors open.
+
+As it is possible to observe, localisation can be very fast or sometimes take
+longer, and in some parts of the map it seems to fail almost completely,
+possibly due to the differences in visual appearance of the environment between
+mapping and localisation.
+
+\subsection{Kimera}
+
+An experiment was conducted to map a corridor in the third floor of Tietotalo
+with Kimera-VIO, using the \gls{ros} wrapper provided by the authors, with
+visual-inertial input from the MyntEye~S~1030 camera. The resulting map is
+shown in \cref{fig:kimera}.
+
+The software had an increasing delay in the processing, possibly due to frame
+processing being too slow with respect to the frame rate of the camera. It was
+not possible to test loop closures, because enabling them would cause the
+software to
+crash.\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO-ROS/issues/37}}
+
+\begin{figure}[tb]
+    \centering
+
+    \includegraphics[width=\textwidth]{openvslam_kampusareena_top.png}
+    \caption{%
+        Mapping of the first and second floors of Kampusareena and the corridor
+        up to the third floor of Tietotalo (223~725 points), generated with
+        OpenVSLAM using as input the rectified stereo pair from the ZED camera.
+        Some drift is noticeable between the two floors of Kampusareena, in the
+        circular balconies. Drift is also noticeable in the long corridor and
+        in the bridge between Sähkötalo and Kampusareena, but additional loop
+        closures could have helped reducing it.
+    }\label{fig:openvslam_kampusareena_top}
+
+    \vspace{1em}
+
+    \includegraphics[width=\textwidth]{openvslam_kampusareena_side.png}
+    \caption{%
+        Side view of the same map as in~\cref{fig:openvslam_kampusareena_top}.
+        Drift in the orientation is noticeable in the stairwell.
+    }\label{fig:openvslam_kampusareena_side}
+
+    \vspace{1em}
+
+    \begin{subfigure}[t]{.24\textwidth}
+        \centering
+        \includegraphics[height=4cm]{corridor_rot.png}
+        \caption{Floor plan.}\label{fig:openvslam_tietotalo_corridor}
+    \end{subfigure}%
+    \begin{subfigure}[t]{.24\textwidth}
+        \centering
+        \includegraphics[height=4cm]{openvslam_tietotalo_with_lc.png}
+        \caption{A session, loop closures enabled.}\label{fig:openvslam_tietotalo_with_lc}
+    \end{subfigure}%
+    \begin{subfigure}[t]{.24\textwidth}
+        \centering
+        \includegraphics[height=4cm]{openvslam_tietotalo_without_lc}
+        \caption{A different session, loop closures disabled.}\label{fig:openvslam_tietotalo_without_lc}
+    \end{subfigure}%
+    \begin{subfigure}[t]{.24\textwidth}
+        \centering
+        \includegraphics[height=4cm]{openvslam_tietotalo_without_lc_detail}
+        \caption{Detail from \cref{fig:openvslam_tietotalo_without_lc}.}\label{fig:openvslam_tietotalo_without_lc_detail}
+    \end{subfigure}%
+
+    \caption{%
+        Mapping of the same office space as in \cref{fig:rtabmap_lc}, performed
+        with OpenVSLAM using as input the rectified stereo pair from the ZED
+        camera. Wrong loop closures and drift are the most evident issues.
+    }\label{fig:openvslam_lc}
+\end{figure}
+
+\begin{figure}[tb]
+    \centering
+
+    \includegraphics[width=\textwidth]{openvslam_kampusareena_map_top.png}
+    \caption{%
+        Map of the first and second floors of Kampusareena (396~723 keypoints),
+        generated with OpenVSLAM using as input the rectified stereo pair from
+        the ZED camera.
+    }\label{fig:openvslam_kampusareena_map_top}
+
+    \vspace{1em}
+
+    \includegraphics[width=\textwidth]{openvslam_kampusareena_map_side.png}
+    \caption{%
+        Side view of the same map as in~\cref{fig:openvslam_kampusareena_map_top}.
+    }\label{fig:openvslam_kampusareena_map_side}
+\end{figure}
+
+\begin{figure}[tb]
+    \centering
+    \begin{subfigure}[t]{.49\textwidth}
+        \centering
+        \includegraphics[height=6cm]{corridor.png}
+        \caption{Floor plan.}\label{fig:kimera_corridor}
+    \end{subfigure}%
+    \begin{subfigure}[t]{.49\textwidth}
+        \centering
+        \includegraphics[height=6cm]{kimera_result.png}
+        \caption{%
+            Map keypoints generated by Kimera-VIO.
+        }\label{fig:kimera_result}
+    \end{subfigure}%
+    \caption{Map generated with Kimera-VIO.}\label{fig:kimera}
+\end{figure}
 
 \FloatBarrier{}
 
