@@ -720,8 +720,8 @@ configuration file. Example configuration files are provided in the
 \begin{Verbatim}[samepage=true]
     ./camera_slam \
         -m RealSense \
-        -c ./param/realsense_stereo.yaml \
-        -v /path/to/the/orb/vocabulary \
+        -c ../param/realsense_stereo.yaml \
+        -v ../third_party/vocab/orb_vocab.dbow2 \
         -output-map-db map.msg
 \end{Verbatim}
 
@@ -749,8 +749,8 @@ To run a pure localisation session, it is necessary to load a pre-built map:
     ./camera_slam \
         --localization \
         -m RealSense \
-        -c ./param/realsense_stereo.yaml \
-        -v /path/to/the/orb/vocabulary \
+        -c ../param/realsense_stereo.yaml \
+        -v ../third_party/vocab/orb_vocab.dbow2 \
         -input-map-db map.msg
 \end{Verbatim}
 
@@ -977,7 +977,7 @@ crash.\footnote{\url{https://github.com/MIT-SPARK/Kimera-VIO-ROS/issues/37}}
 
     \includegraphics[width=\textwidth]{openvslam_kampusareena_top.png}
     \caption{%
-        Mapping of the first and second floors of Kampusareena and the corridor
+        Mapping of the first and second floor of Kampusareena and the corridor
         up to the third floor of Tietotalo (223~725 points), generated with
         OpenVSLAM using as input the rectified stereo pair from the ZED camera.
         Some drift is noticeable between the two floors of Kampusareena, in the
