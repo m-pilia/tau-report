@@ -1,8 +1,8 @@
 [![](https://github.com/m-pilia/tau-report/workflows/Build/badge.svg)](https://github.com/m-pilia/openvslam-example/actions?query=workflow%3ABuild)
 
-![](https://raw.githubusercontent.com/m-pilia/tau-report/master/data/banner.png)
+# Qualitative test of SLAM solutions for large scale indoor mapping
 
-Qualitative test of some SLAM solutions for large scale indoor mapping.
+![](https://raw.githubusercontent.com/m-pilia/tau-report/master/data/banner.png)
 
 # Build
 

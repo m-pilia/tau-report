@@ -241,12 +241,12 @@ the distortion coefficients.} The SDK and documentation are also less mature.
 \subsection{ZED camera}
 
 The ZED camera\footnote{\url{https://www.stereolabs.com/zed/}} is a stereo
-camera manufactured by ZED Labs. At Tampere University, some units are
-available at CIVIT.
+camera manufactured by ZED Labs (76\textdegree\texttimes47\textdegree, 120~mm
+baseline). At Tampere University, some units are available at CIVIT.
 
-The API is fairly mature and exposes both access to the raw data (streams for
-raw and rectified stereo images and depth map) and to high-level features such
-as mapping and 3D scanning. The SDK is however proprietary, close source
+The API is fairly mature and exposes access to both raw data (streams for raw
+and rectified stereo images and depth map) and high-level features (such as
+mapping and 3D scanning). The SDK is however proprietary, close source
 software. Another noteworthy limitation is that the depth map is computed on
 the host, and the SDK requires a CUDA-enabled Nvidia GPU to work.
 
@@ -626,17 +626,33 @@ allows to use any of the four cameras. Source code and instructions are
 available on
 GitHub.\footnote{\url{https://github.com/m-pilia/openvslam-example}}
 
-Note that this application is not production-quality code, but rather a fast
-prototype. It is lacking features and testing, and it was not designed with the
-idea of being published.
+Note that this prototype is not production-quality code, it lacks features and
+testing, and it was not designed with the idea of being published.
 
 \subsubsection{Build}
 
 The following instructions allow to reproduce the environment on Ubuntu 16.04
 or 18.04:\footnote{The repository has a continuous integration setup,
 performing cloud builds on GitHub Actions inside a Docker container. It is
-possible to check the Dockerfile located in the root of the repository to see a
-working example of build environment on Ubuntu.}
+possible to check the Dockerfile located in the root of the repository to
+see a working example of build environment on Ubuntu.}\footnote{In the upstream
+installation instructions, all software packages are installed at system level
+in \texttt{/usr/local}. If preferred, it is possible to install them in a local
+folder by using \texttt{make DESTDIR=/some/local/folder install} instead of
+\texttt{sudo make install}, to avoid littering system paths with files outside
+of the package manager's control. When doing so, it is important to point CMake
+to such custom installation path when each package is required in a subsequent
+build, by adding an argument to CMake in the form
+\texttt{PackageName\_DIR=/some/local/folder/path/to/config}, where
+\texttt{PackageName} is the name of the CMake package and the given path points
+to the CMake configuration file for the software package (e.g.
+\texttt{-DOpenCV\_DIR=/home/foo/dev/share/OpenCV} if OpenCV was installed with
+\texttt{make DESTDIR=/home/foo/dev install}).}\footnote{These
+instructions assume a clean system. It would be wise to not have
+any catkin workspace active when building non-ROS software, to prevent
+CMake from unexpectedly picking different versions of libraries from ROS
+packages, potentially causing build or link time errors.}
+
 \begin{enumerate}
     \item (Only on Ubuntu 16.04) Install an up-to-date version of CMake with
         support for C++17 (the default version 3.1 shipped with Ubuntu 16.04
@@ -662,13 +678,20 @@ working example of build environment on Ubuntu.}
     \item Build and install the OpenVSLAM library and its dependencies,
         following upstream
         instructions.\footnote{\url{https://openvslam.readthedocs.io/en/master/installation.html}}
+        When building OpenVSLAM, add \texttt{-DINSTALL\_PANGOLIN\_VIEWER=ON} to
+        the parameters passed to CMake when generating the build
+        configuration.\footnote{The complete CMake command for this build can
+        be seen at
+        \url{https://github.com/m-pilia/openvslam-example/blob/8f0157575a8/Dockerfile\#L78-L87}}\footnote{In
+        case multiple versions of Eigen or OpenCV were present on the system
+        and the wrong one was selected in the build configuration, it is
+        possible to point CMake to the correct versions by adding
+        \texttt{-DEigen3\_DIR=/usr/local/share/eigen3/cmake} and
+        \texttt{-DOpenCV\_DIR=/usr/local/share/OpenCV} to the CMake flags.}
+
         After building OpenVSLAM, install it by running \texttt{sudo make
-        install} in the OpenVSLAM build folder.\footnote{If you prefer,
-        you can install it in a local folder with \texttt{make
-        DESTDIR=/some/local/folder install}; in that case, remember to pass
-        \texttt{openvslam\_DIR=/some/local/folder} to CMake later, when
-        building the \texttt{openvslam-example} repository.} In these tests,
-        OpenVSLAM up to commit \texttt{f2945209fc} was used.
+        install} in the OpenVSLAM build folder. In these tests, OpenVSLAM up to
+        commit \texttt{f2945209fc} was used.
 
     \item Install \texttt{librealsense} as described in
         \cref{sec:rtabmap-setup}.
@@ -696,6 +719,11 @@ working example of build environment on Ubuntu.}
     cd openvslam-example
     mkdir build && cd build
 
+    # Only on Ubuntu 16.04, use gcc-7 instead of gcc-5
+    # Change to /usr/bin/{gcc,g++}-7 if not using ccache
+    export CC=/usr/lib/ccache/gcc-7
+    export CXX=/usr/lib/ccache/g++-7
+
     cmake .. # To build ZED support, use: cmake .. -DCAMERA_SLAM_WITH_ZED=ON
     make -j"$(nproc)$"
 \end{Verbatim}
@@ -722,7 +750,7 @@ configuration file. Example configuration files are provided in the
         -m RealSense \
         -c ../param/realsense_stereo.yaml \
         -v ../third_party/vocab/orb_vocab.dbow2 \
-        -output-map-db map.msg
+        --output-map-db map.msg
 \end{Verbatim}
 
 If everything works correctly, a couple of windows should open, showing the
@@ -751,7 +779,7 @@ To run a pure localisation session, it is necessary to load a pre-built map:
         -m RealSense \
         -c ../param/realsense_stereo.yaml \
         -v ../third_party/vocab/orb_vocab.dbow2 \
-        -input-map-db map.msg
+        --input-map-db map.msg
 \end{Verbatim}
 
 The \texttt{-{}-output-video} and \texttt{-{}-input-video} flags allow to
