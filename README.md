@@ -1,5 +1,5 @@
-[![](https://github.com/m-pilia/tau-report/workflows/Build/badge.svg)](https://github.com/m-pilia/openvslam-example/actions?query=workflow%3ABuild)
-[![](https://github.com/m-pilia/tau-report/workflows/Upload%20PDF%20on%20release/badge.svg)](https://github.com/m-pilia/openvslam-example/actions?query=workflow%3A"Upload+PDF+on+release")
+[![](https://github.com/m-pilia/tau-report/workflows/Build/badge.svg)](https://github.com/m-pilia/tau-report/actions?query=workflow%3ABuild)
+[![](https://github.com/m-pilia/tau-report/workflows/Upload%20PDF%20on%20release/badge.svg)](https://github.com/m-pilia/tau-report/actions?query=workflow%3A"Upload+PDF+on+release")
 
 # Qualitative test of SLAM solutions for large scale indoor mapping
 
