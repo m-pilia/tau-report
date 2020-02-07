@@ -19,6 +19,7 @@
 \usepackage{subcaption}
 \usepackage{fancyvrb}
 \usepackage{placeins}
+\usepackage[multiple]{footmisc}
 
 \usepackage{pgfplots}
 \pgfplotsset{compat=newest}
@@ -99,7 +100,7 @@ environments.
 
 \subsection{\acs{ros}}
 
-The \glsfirst{ros}\footnote{\url{https://www.ros.org}} is a software framework
+The \gls{ros}\footnote{\url{https://www.ros.org}} is a software framework
 developed at Stanford University as a platform for robotic research. Despite
 its name, it is not a true operating system, but rather a software framework
 that runs as a set of applications on Linux, Windows, or Mac. \gls{ros} has a
@@ -109,19 +110,19 @@ applications (e.g.\ controlling different sensors or actuators).
 \gls{ros} applications can be distributed, built and installed as
 \textit{packages} whose build system, catkin, is a collection of CMake macros.
 \gls{ros} applications are executed as \textit{nodes}, communicating over the
-network so they can effectively run over different physical units. \gls{ros}
+network so they can effectively run on different physical units. \gls{ros}
 nodes communicate by sending network packages through streams called
 \textit{topics}, and via a \gls{rpc} mechanism (known as \gls{ros}
 \textit{services}).
 
 \gls{ros} is released in
 \textit{distributions},\footnote{\url{http://wiki.ros.org/Distributions}} each
-one supported on specific versions of Ubuntu. At the time of writing, \gls{ros}
-1.x is still the most widely used. \gls{ros} 2.x is a new generation system,
+supported on specific versions of Ubuntu. At the time of writing, \gls{ros} 1.x
+is still the most widely used. \gls{ros} 2.x is a new generation system,
 developed in parallel and largely incompatible with 1.x. In the following, only
 \gls{ros} 1.x will be used.
 
-A detailed introduction to the \gls{ros} is beyond the scope of the present
+A detailed introduction to \gls{ros} is beyond the scope of the present
 document, and comprehensive documentation and tutorials are available on the
 official wiki.\footnote{\url{http://wiki.ros.org}} If not familiar with
 \gls{ros}, a walk through the tutorials is highly
@@ -203,8 +204,9 @@ see the example in the \texttt{librealsense} SDK:
 \url{https://github.com/IntelRealSense/librealsense/blob/83f952a4bd/wrappers/python/examples/t265_stereo.py}}
 
 The depth and tracking cameras can be combined together for 3D reconstruction
-tasks. The 3D model of a support for both cameras is provided by
-Intel,\footnote{\url{https://github.com/IntelRealSense/librealsense/tree/3b14a5c/examples/tracking-and-depth}}
+tasks. A mechanical support for both cameras is provided by Intel in the form
+of a 3D
+model,\footnote{\url{https://github.com/IntelRealSense/librealsense/tree/3b14a5c/examples/tracking-and-depth}}
 together with a calibration
 matrix,\footnote{\url{https://github.com/IntelRealSense/librealsense/blob/3b14a5c876/examples/tracking-and-depth/H_t265_d400.cfg}}
 and a 3D-printed copy is already available in the lab.\footnote{Such support
@@ -212,7 +214,7 @@ and a 3D-printed copy is already available in the lab.\footnote{Such support
     laptop. For the latter use case, it is possible to 3D-print a fixture that
     can be taped to the lid of the laptop, and allows to attach and detach the
     camera support via its dove-tail joint. The STL file for such fixture is
-    available at
+available at
 \url{https://github.com/m-pilia/phd-handover-report/blob/master/data/fixture.stl}.}
 A calibration of the rig can be performed with Kalibr (\cref{sec:kalibr}) if
 necessary.
@@ -230,8 +232,7 @@ wrapper.\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK/tree/master/w
 The camera is not self-calibrating, and calibration of the distortion
 parameters needs to be performed manually with a tool provided by the
 manufacturer.\footnote{\url{https://mynt-eye-s-sdk.readthedocs.io/en/2.3.9/src/tools/calibration_tool.html}}
-Camera-IMU calibration can be performed with
-Kalibr.\textsuperscript{\ref{note:kalibr}}
+Camera-IMU calibration can be performed with Kalibr (\cref{sec:kalibr}).
 
 While the higher baseline should give this camera more range, the quality of
 the depth map seems worse compared to the RealSense.\footnote{The camera
@@ -275,13 +276,14 @@ candidate is found, a loop closure edge is added to the pose graph, that is in
 turn optimised with g2o~\cite{grisetti2011g2o}. This mechanism works reasonably
 in some environments, but it easily fails in presence of perceptual aliasing
 (e.g.\ when navigating through similar corridors in an office space), due to
-the lack of any mechanism to cope with outliers in the loop closure detection.
+the lack of any mechanism in the optimisation to cope with outliers produced by
+the loop closure detection.
 
 Localisation is also based on \gls{bow}, by retrieving a frame with similar
 visual words and subsequently recovering the camera pose through \gls{pnp}.
 This approach works on a single session \gls{slam}, but it is likely not robust
-enough to handle localisation in multiple sessions with varying conditions
-(illumination, crowding, etc.) or image data from different sensors.
+enough to handle localisation in multiple sessions with highly varying
+conditions (illumination, crowding, etc.) or image data from different sensors.
 
 While OpenVSLAM is reasonably optimised for speed, it is not optimised for
 memory usage. The map can be stored to disk in messagepack format, to be
@@ -297,9 +299,10 @@ keyframes.
 \subsection{Kimera}
 
 Kimera~\cite{rosinol2019kimera} is a software library for semantic \gls{slam}
-implemented at the
-\gls{spark}.\footnote{\url{https://github.com/MIT-SPARK/Kimera}} It is composed
+implemented at the \gls{spark}, Massachusetts Institute of
+Technology.\footnote{\url{https://github.com/MIT-SPARK/Kimera}} It is composed
 of four modules:
+
 \begin{itemize}
     \item
         Kimera-VIO,\footnote{\label{note:kimera_vio}\url{https://github.com/MIT-SPARK/Kimera-VIO}} a
@@ -345,9 +348,9 @@ framework, under active development, that provides:
     \item visual \gls{slam} based on \gls{rgbd}, stereo, or lidar input;
     \item built-in \gls{rgbd} odometry based on point features (including
         support for SIFT~\cite{lowe1999object}, SURF~\cite{bay2006surf},
-        ORB~\cite{rublee2011orb}, and other algorithms);
-    \item multi-session mapping, built-in ability and tools to import,
-        manipulate, and export maps;
+        ORB~\cite{rublee2011orb}, and other descriptors);
+    \item multi-session mapping, built-in capability to import, manipulate, and
+        export maps;
     \item optimisation for mapping of large environments in real-time, with
         bounded computing time per frame;
     \item built-in integration with several odometry front-ends (LOAM, FOVIS,
@@ -388,12 +391,12 @@ wiki\footnote{\url{http://wiki.ros.org/rtabmap_ros}} for the \gls{ros} package
 
 Pre-built binaries for both the standalone application and for the \gls{ros}
 package are available in the \gls{ros} Ubuntu repository, however the pre-built
-version is missing several optional components (e.g.~integration with GTSAM or
-RealSense). It is possible to check what components are built in the current
-version by running \texttt{rtabmap -{}-version}, and to enable more components
-it is necessary to build \gls{rtabmap} from source, after installing or
-building the desired components and making sure that the respective packages
-are detected by CMake.
+version of the standalone application is missing several optional components
+(e.g.~integration with GTSAM or RealSense). It is possible to check what
+components are built in the current version by running \texttt{rtabmap
+-{}-version}, and to enable more components it is necessary to build
+\gls{rtabmap} from source, after installing or building the desired components
+and making sure that the respective packages are detected by CMake.
 
 Besides of the aforementioned documentation, further examples of usage are
 provided on the \gls{ros}
@@ -413,7 +416,8 @@ Linux and Ubuntu 16.04. The following instructions allow to reproduce the
 experimental environment on Ubuntu 16.04 or 18.04.
 
 When reproducing the work it is recommended, even if not strictly necessary, to
-install and configure ccache, since it can greatly speed up repeated builds:
+install and configure \texttt{ccache}, since it can greatly speed up repeated
+builds:
 \begin{Verbatim}[samepage=true]
     sudo apt-get install -y ccache
     sudo /usr/sbin/update-ccache-symlinks
@@ -488,13 +492,14 @@ The following instructions allow to reproduce the set-up used to test
 \end{Verbatim}
         and in another shell launch \texttt{rviz} to display the point cloud.
         In \texttt{rviz}, under the tree view displayed in the panel on the
-        left dock, set the \texttt{Fixed frame} (under \texttt{Global Options})
-        to \texttt{camera\_link}, and enable the point cloud by clicking the
-        \texttt{Add} button on the bottom left, in the dialog window switch to
-        the \texttt{By topic} tab, and select the \texttt{pointcloud2} topic
-        (under \texttt{depth\_registered/points}).\footnote{To get familiar
-        with \texttt{rviz}, a set of tutorials is available in the \gls{ros}
-        wiki at \url{http://wiki.ros.org/rviz/Tutorials}.}
+        left dock, set the ``\texttt{Fixed frame}'' (under ``\texttt{Global
+        Options}'') to \texttt{camera\_link}, and enable the point cloud by
+        clicking the ``\texttt{Add}'' button on the bottom left, in the dialog
+        window switch to the ``\texttt{By topic}'' tab, and select the
+        \texttt{pointcloud2} topic (under
+        \texttt{depth\_registered/points}).\footnote{To get familiar with
+        \texttt{rviz}, a set of tutorials is available in the \gls{ros} wiki at
+        \url{http://wiki.ros.org/rviz/Tutorials}.}
 
     \item Install \gls{rtabmap} and its \gls{ros} wrapper. The binary version
         from the \gls{ros} deb repository includes support for g2o and Vertigo,
@@ -535,11 +540,11 @@ builds the map and point cloud. The \texttt{realsense-ros} repository already
 provides a launch file named
 \texttt{rs\_rtabmap.launch},\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d9e/realsense2_camera/launch/rs_rtabmap.launch}}
 located in the \texttt{realsense2\_camera} package, that allows to run
-\gls{rtabmap} with this type of setup, creating one data-publishing \gls{ros}
-node for each RealSense device, a node to publish the transform between
-cameras, and a node that runs \gls{rtabmap} and starts \texttt{rviz} for
-real-time visualisation of the point cloud being generated. This can be started
-with:
+\gls{rtabmap} with this type of setup, creating a couple of \gls{ros}
+nodes publishing data from each RealSense device, a node to publish the
+transform between cameras, and a node that runs \gls{rtabmap} and starts
+\texttt{rviz} for real-time visualisation of the point cloud being generated.
+This can be started with:
 \begin{Verbatim}[samepage=true]
     roslaunch realsense2_camera rs_rtabmap.launch
 \end{Verbatim}
@@ -556,13 +561,13 @@ the pre-existing map in the database as soon as a loop closure is established
 with the previous map.
 
 It is possible to inspect a database file using the
-\texttt{rtabmap-databaseViewer} tool, that comes as a part of an installation
-of \gls{rtabmap} and allows to visualise pose graph, feature extraction,
-matching, and loop closures:
+\texttt{rtabmap-databaseViewer} tool, that is included with the installation of
+\gls{rtabmap} and allows to visualise pose graph, feature extraction, matching,
+and loop closures:
 \begin{Verbatim}[samepage=true]
     rtabmap-databaseViewer ~/.ros/rtabmap.db
 \end{Verbatim}
-The database can also be opened from within the \gls{rtabmap} GUI (``Open
+The database can be also opened from within the \gls{rtabmap} GUI (``Open
 database\ldots'' from the ``File'' menu), that allows then to export the point
 cloud in PLY format.
 
@@ -582,19 +587,19 @@ in the \texttt{rs\_rtabmap.lauch} launch file, located in
 where \texttt{\$CATKIN\_WS} is the location of the catkin workspace where the
 \texttt{realsense-ros} package was built. It is possible to use
 \texttt{rqt\_reconfigure} to check the value of the parameter while the system
-is running:
+is running (but not to change it while the camera is streaming):
 \begin{Verbatim}[samepage=true]
     rosrun rqt_reconfigure rqt_reconfigure
 \end{Verbatim}
 
 \gls{rtabmap} stores its parameters in the
-\texttt{\textasciitilde/.rtabmap/rtabmap.ini}. The parameters can be modified
-either in the configuration file or through the \gls{rtabmap} GUI application
-(taking care of saving the configuration before leaving the GUI). In the
-experiments, the g2o solver was used for pose graph optimisation, and robust
-loop closure detection with switchable constraints was enabled, corresponding
-to the following parameters:\footnote{A copy of the parameter file used in the data
-collection is available at
+\texttt{\textasciitilde/.rtabmap/rtabmap.ini} configuration file. The
+parameters can be modified either in the configuration file or through the
+\gls{rtabmap} GUI application (taking care of saving the configuration before
+leaving the GUI). In the experiments, the g2o solver was used for pose graph
+optimisation, and robust loop closure detection with switchable constraints was
+enabled, corresponding to the following parameters:\footnote{A copy of the
+    parameter file used in the data collection is available at
 \url{https://github.com/m-pilia/phd-handover-report/blob/master/data/rtabmap.ini}}
 \begin{Verbatim}[samepage=true]
     Optimizer\Robust = true
@@ -611,11 +616,13 @@ In this experiment, the data was collected by fixing both cameras to the outer
 surface of the laptop lid, using duct tape, and without any extrinsic
 calibration. A more accurate data collection would require a rigid fix, to
 prevent the two cameras from moving with respect to each other, e.g.\ by using
-the mount described in~\cref{sec:realsense}. The transformation parameters
-between the two cameras can then be estimated and set in the
-\texttt{rs\_d400\_to\_t265.launch} file, in the line that defines the static
-transform publisher (and is set to a null transform by
-default).\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d9e01a/realsense2_camera/launch/rs_d400_and_t265.launch\#L48}}
+the 3D-printed support described in~\cref{sec:realsense}. The transformation
+parameters between the two cameras can then be estimated and published using
+the
+\texttt{static\_transform\_publisher}\footnote{\url{http://wiki.ros.org/tf\#static_transform_publisher}}
+from the \texttt{tf} package, called in the \texttt{rs\_d400\_to\_t265.launch}
+file (the parameters are set to a null transform in the launch
+file).\footnote{\url{https://github.com/IntelRealSense/realsense-ros/blob/69d199d9e01a/realsense2_camera/launch/rs_d400_and_t265.launch\#L48}}
 
 \subsection{Mapping with OpenVSLAM}\label{sec:openvslam-setup}
 
@@ -635,23 +642,26 @@ The following instructions allow to reproduce the environment on Ubuntu 16.04
 or 18.04:\footnote{The repository has a continuous integration setup,
 performing cloud builds on GitHub Actions inside a Docker container. It is
 possible to check the Dockerfile located in the root of the repository to
-see a working example of build environment on Ubuntu.}\footnote{In the upstream
-installation instructions, all software packages are installed at system level
-in \texttt{/usr/local}. If preferred, it is possible to install them in a local
-folder by using \texttt{make DESTDIR=/some/local/folder install} instead of
-\texttt{sudo make install}, to avoid littering system paths with files outside
-of the package manager's control. When doing so, it is important to point CMake
-to such custom installation path when each package is required in a subsequent
-build, by adding an argument to CMake in the form
-\texttt{PackageName\_DIR=/some/local/folder/path/to/config}, where
-\texttt{PackageName} is the name of the CMake package and the given path points
-to the CMake configuration file for the software package (e.g.
-\texttt{-DOpenCV\_DIR=/home/foo/dev/share/OpenCV} if OpenCV was installed with
-\texttt{make DESTDIR=/home/foo/dev install}).}\footnote{These
-instructions assume a clean system. It would be wise to not have
-any catkin workspace active when building non-ROS software, to prevent
-CMake from unexpectedly picking different versions of libraries from ROS
-packages, potentially causing build or link time errors.}
+see a working example of build environment on Ubuntu.}\footnote{In the
+upstream installation instructions, all software packages are installed at
+system level in \texttt{/usr/local}. If preferred, it is possible to
+install them in a local folder by using \texttt{make
+DESTDIR=/some/local/folder install} instead of \texttt{sudo make install},
+to avoid littering system paths with files outside of the package manager's
+control. When doing so, it is important to point CMake to such custom
+installation path when each package is required in a subsequent build, by
+adding an argument to CMake in the form
+\texttt{-DPackageName\_DIR=/some/local/folder/path/to/config}, where
+\texttt{PackageName} is the name of the CMake package and the given path
+points to the CMake configuration file for the software package (e.g.
+\texttt{-DOpenCV\_DIR=/home/foo/dev/share/OpenCV} if OpenCV was installed
+with \texttt{make DESTDIR=/home/foo/dev install}). For more details, please
+refer to the documentation of CMake:
+\url{https://cmake.org/cmake/help/latest/manual/cmake-packages.7.html}.}\footnote{These
+instructions assume a clean system. It would be wise to not have any \gls{ros}
+or catkin workspace active in a shell used to build non-ROS software, to
+prevent CMake from unexpectedly picking different versions of libraries from
+ROS packages, potentially causing build or link time errors.}
 
 \begin{enumerate}
     \item (Only on Ubuntu 16.04) Install an up-to-date version of CMake with
@@ -698,7 +708,7 @@ packages, potentially causing build or link time errors.}
 
     \item Install the
         MYNT-EYE-S-SDK.\footnote{\url{https://github.com/slightech/MYNT-EYE-S-SDK}}
-        The SDK is available both as pre-build deb package or source
+        The SDK is available both as pre-built deb package or source
         distribution. It is recommended to build it from source after
         installing OpenCV, in order to use the same version of the library and
         avoid binary conflicts due to different versions of OpenCV, following
@@ -710,10 +720,12 @@ packages, potentially causing build or link time errors.}
         This is only required in order to use the ZED camera, and requires a
         CUDA-enabled Nvidia GPU on the host.
 
-    \item Build the \texttt{openvslam-example} application. By default, support
-        for RealSense and MYNT is built. It is possible to optionally build
-        support for the ZED camera. The ZED module is however untested in its
-        current state and may not work as intended.
+    \item Build the \texttt{openvslam-example} application. By default, the
+        package is built with support for RealSense and MYNT. It is possible to
+        optionally build it with support for the ZED camera. The ZED module is
+        however untested in its current state, after refactoring and port to
+        the version 3.0 of the ZED SDK, because the camera was not available
+        lately, therefore it may not work as intended.
 \begin{Verbatim}[samepage=true]
     git clone https://github.com/m-pilia/openvslam-example
     cd openvslam-example
@@ -725,7 +737,7 @@ packages, potentially causing build or link time errors.}
     export CXX=/usr/lib/ccache/g++-7
 
     cmake .. # To build ZED support, use: cmake .. -DCAMERA_SLAM_WITH_ZED=ON
-    make -j"$(nproc)$"
+    make -j"$(nproc)"
 \end{Verbatim}
 
 \end{enumerate}
@@ -819,8 +831,8 @@ Kimera-VIO was tested using the \gls{ros} wrapper provided by the authors, simpl
 adding a launch file and configuration for the MyntEye~S~1030 camera.
 
 A working \gls{ros} environment is required. In this work, \gls{ros} Kinetic
-was used, and the environment should be already set up if the steps described
-in~\cref{sec:rtabmap-setup} were followed.
+was used, and the \gls{ros} environment should be already set up if the steps
+described in~\cref{sec:rtabmap-setup} were followed. To test Kimera:
 
 \begin{enumerate}
     \item Install the MYNT-EYE-S-SDK as described in \cref{sec:openvslam-setup}.
@@ -858,12 +870,12 @@ the MYNT EYE wrapper and then use the \texttt{kimera\_ros\_mymynt.launch} file
 
 \gls{rtabmap} was tested in indoor environments. A mapping session was
 conducted walking for about 2.4~km through four buildings of the Hervanta
-campus, Tampere University (\cref{fig:campus_map}). The two lower floors of
+campus, Tampere University (\cref{fig:campus_map}). First and second floor of
 Kampusareena were mapped, together with the two lower floors of the main
 building, the first floor of Rakennustalo, and part of the first floor of
 Sähkötalo. The mapping session took about one hour and produced 1.2 million
-keypoints and a pose graph with 3300 nodes, with a resulting database of size
-equal to 1.3~GB. The result is presented
+keypoints and a pose graph containing about 3~300 nodes, with a resulting
+database of size equal to 1.3~GB. The result is shown
 in~\cref{fig:rtabmap_hervanta,fig:rtabmap_hervanta_detail}.
 
 \gls{rtabmap} was able to handle the large environment and all loop closures,
@@ -904,7 +916,7 @@ optimisation (\cref{fig:rtabmap_lc}).
 
     \includegraphics[width=\textwidth]{rtabmap_hervanta_detail.png}
     \caption{%
-        Detail of Kampusareena in the point cloud in~\cref{fig:rtabmap_hervanta}.
+        Detail of Kampusareena from the point cloud in~\cref{fig:rtabmap_hervanta}.
     }\label{fig:rtabmap_hervanta_detail}
 
     \vspace{1em}
@@ -938,14 +950,15 @@ optimisation (\cref{fig:rtabmap_lc}).
 
 Since OpenVSLAM does not implement any mechanism to cope with outliers in loop
 closure detection, one limitation is that it can introduce wrong loop closures
-in presence of visual aliasing. A smaller experiment was conducted by mapping
-the corridor of an office space in the third floor of Tietotalo, Hervanta
-Campus (\cref{fig:campus_map}).
+in presence of visual aliasing. An experiment was conducted by mapping the
+corridor of an office space in the third floor of Tietotalo, Hervanta Campus
+(\cref{fig:campus_map}), using as input the rectified stereo pair from the ZED
+camera.
 
 Results are shown in \cref{fig:openvslam_lc}. When loop closure detection was
 enabled, wrong loop closures were established between similar looking
-corridors. When disabling loop closures, a relatively large drift was observed
-in the resulting map.
+corridors. When disabling loop closures, drift was observed in the resulting
+map.
 
 \subsubsection{Mapping in large indoor environments}
 
@@ -959,7 +972,8 @@ It is possible to observe some drift, for instance between the two floors of
 Kampusareena in the circular balconies. A certain amount of drift was also
 observed in the stairwell of Tietotalo, in the long corridor in Sähkötalo, and
 in the bridge between Sähkötalo and Kampusareena. This could have however been
-reduced with more frequent loop closures.
+reduced by collecting data in a way that would allow more frequent loop
+closures.
 
 \subsubsection{Mapping and localisation in Kampusareena}
 
@@ -971,21 +985,24 @@ scene. The cloud of keypoints is shown in
 The map consists of 396~723 keypoints and was generated with about 2 hours of
 data collection. Memory usage increased with the size of the map, peaking at
 over 20~GB. Moreover, the computing time required to perform bundle adjustment
-for loop closures grew with the size of the map, taking several minutes
+for loop closures grew with the size of the map, taking several minutes to
+perform a loop closure toward the end of the mapping session.
 
 A video demonstration of localisation in this map is available at
 \url{https://github.com/m-pilia/phd-handover-report/blob/master/data/localisation_stereo.mp4}.
 The video contains a sequence of short clips, and for each clip global
-localisation was attempted. The video is not edited and the clips are shown in
-their entirety, the jumps are due to the fact that the clips were collected
-non-contiguously. These data were collected with the same camera used in the
-mapping, but at a different time of the day, with more crowded environment, and
-shops open, with lights on and shutters raised up or doors open.
+localisation was attempted. The video was not edited and the clips are shown in
+their entirety, the jumps are due to the fact that the clips were collected in
+a non-contiguous manner. These data were collected with the same camera used in
+the mapping, but at a different time of the day, with more crowded environment,
+and shops open, with lights on and shutters raised up or doors open.
 
 As it is possible to observe, localisation can be very fast or sometimes take
 longer, and in some parts of the map it seems to fail almost completely,
 possibly due to the differences in visual appearance of the environment between
-mapping and localisation.
+mapping and localisation. This may be due to the fact that many keypoints are
+placed on non-fixed objects such as chairs, tables, posters, doors, roller
+shutters of shops, etc.
 
 \subsection{Kimera}
 
